@@ -1,0 +1,92 @@
+// 文件系统的类型定义 fext2_xxx类型
+
+#ifndef INCLUDE_TYPES_H
+#define INCLUDE_TYPES_H
+#include<stdint.h>
+
+
+
+// 定义超级块 文件系统中仅有一份 而其他块组中则是实现备份
+// 占用大小 64B
+/*
+用于描述整个文件系统的基本信息
+*/
+struct fext2_super_block
+{
+    char       s_volume_name[16];              // 文件系统名称
+    uint32_t   s_disk_size;                    // 磁盘大小
+    uint32_t   s_inodes_count;                 // inode 总数
+    uint32_t   s_blocks_count;                 // block 总数
+    uint32_t   s_blocks_per_group;             // 每组的块数目
+    uint32_t   s_inodes_per_group;             // 每组的inode数目
+    uint32_t   s_blocks_size;                  // block 大小
+    uint32_t   s_inode_size;                   // inode 大小
+    uint32_t   s_mtime;                        // 文件系统挂载时间
+    uint8_t    s_state;                        // 文件系统状态：挂载/未挂载
+    char       padding[15];                    // 填充
+};
+
+
+
+
+
+// 组描述符
+
+// 结构占用大小 32 B
+struct fext2_group_desc
+{
+    uint32_t   bg_block_bitmap;             // 块组中数据位图所在块号
+    uint32_t   bg_inode_bitmap;             // 块组中inode位图所在块号
+    uint32_t   bg_inode_table ;             // 块组中inode table所在块号
+    uint16_t   bg_free_blocks_count;        // 块组中空闲的块数目
+    uint16_t   bg_free_inodes_count;        // 块组中空闲的inode数目
+    uint16_t   bg_used_dirs_count;          // 已分配的目录数目
+
+    char       padding[14];                 // 填充
+};
+
+
+
+
+
+#define FEXT2_N_BLOCKS     8               // 能够直接索引的数据块数目
+
+
+
+
+// inode 索引节点
+// 该文件系统不使用片
+struct fext2_inode
+{
+    uint16_t  i_mode;                      //  文件模式 
+    uint16_t  i_uid;                       //  拥有者的用户id 只用低16位
+    uint16_t  i_gid;                       //  拥有组的组id  只用低16位
+    uint32_t  i_size;                      //  文件大小 Byte
+    uint32_t  i_atime;                     //  访问时间 最近一次访问时间
+    uint32_t  i_ctime;                     //  创建时间 创建时间
+    uint32_t  i_mtime;                     //  修改时间 最近一次修改时间
+    uint32_t  i_dtime;                     //  删除时间 
+    uint16_t  i_link_count;                //  链接计数
+    uint16_t  i_blocks;                    //  块计数
+
+    uint32_t  i_block[FEXT2_N_BLOCKS];     //  数据块指针 能够直接访问的地址+一次间接块指针+二次间接块指针+三次间接块指针（当前暂不启用后两个的功能）
+    
+};
+
+
+// 定义文件名的长度[Ext2 规定的最大文件的]
+
+#define FEXT2_MAX_NAME_LEN    255
+
+struct fext2_dir_entry
+{
+    uint32_t inode;                        // inode 号
+    uint16_t rec_len;                      // 目录项长度
+    uint8_t  name_len;                     // 名字长度
+    uint8_t  file_type;                    // 文件类型 1. 常规文件  2. 目录文件
+    char     file_name[FEXT2_MAX_NAME_LEN];// 可以使用可变长度的数组（暂时不用）
+
+};
+
+
+#endif
