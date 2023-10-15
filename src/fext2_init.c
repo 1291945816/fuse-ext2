@@ -62,41 +62,6 @@ int init_meta_info()
      fext2_groups_table = NULL;
 }
 
-int read_superblock()
-{
-
-    device_seek(0*BLOCK_SIZE);
-    device_read(&fext2_sb,sizeof(struct fext2_super_block));
-    DBG_PRINT("filesystem name: %s\n",fext2_sb.s_volume_name);
-
-    // // 判断幻数来确保系统是否已经初始化了
-    if (fext2_sb.s_magic != FILESYSTEM_MAGIC)
-    {
-        // 初始化文件系统的基本信息
-        init_meta_info();
-    }
-    
-}
-
-int read_group_desc()
-{
-    if (!fext2_groups_table)
-        fext2_groups_table = (struct fext2_group_desc *)malloc(sizeof(struct fext2_group_desc) * NUM_GROUP);
-
-    device_seek(BLOCK_SIZE);
-    device_read(fext2_groups_table,NUM_GROUP*sizeof(struct fext2_group_desc));
-
-#ifdef FEXT2_DEBUG
-    for (size_t i = 0; i < NUM_GROUP; i++)
-    {
-
-        DBG_PRINT("%d\n",fext2_groups_table[i].bg_block_bitmap);
-    }
-#endif
-
-}
-
-
 
 void erase_disk()
 {

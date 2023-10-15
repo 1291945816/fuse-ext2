@@ -42,8 +42,23 @@ Bool device_seek(uint32_t offset);
  */
 Bool device_write(void * buffer,uint32_t size);
 
+/**
+ * @brief 从指定位置读取size个字节的数据到buffer中
+ * 
+ * @param buffer 存数据的缓冲区
+ * @param size 要读取的数据大小
+ * @return Bool 
+ */
 Bool device_read(void * buffer,uint32_t size);
 
+/**
+ * @brief 刷位于缓冲区的数据到指定位置
+ * 
+ */
+void device_fflush()
+{
+    fflush(fp);
+}
 
 
 

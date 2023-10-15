@@ -1,7 +1,7 @@
 
 #include"device.h"
 #include"fuse-ext2/types.h"
-#include"fuse-ext2/fext2_init.h"
+#include"fuse-ext2/fext2.h"
 
 int main()
 {
@@ -15,7 +15,7 @@ int main()
     // device_close();
     
     // printf("%lu", sizeof(struct fext2_inode));
-    erase_disk();
+    // erase_disk();
     // init_meta_info();
     read_superblock();
     // device_close();
