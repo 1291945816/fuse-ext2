@@ -1,11 +1,11 @@
 #include<stdio.h>
 #include<time.h>
-#include"types.h"
+#include"fuse-ext2/types.h"
+#include "device.h"
 
 int main()
 {
     
-    printf("%ld\n",sizeof(unsigned char));
     
     
     return 0;
