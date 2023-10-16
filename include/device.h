@@ -55,10 +55,7 @@ Bool device_read(void * buffer,uint32_t size);
  * @brief 刷位于缓冲区的数据到指定位置
  * 
  */
-void device_fflush()
-{
-    fflush(fp);
-}
+void device_fflush();
 
 
 

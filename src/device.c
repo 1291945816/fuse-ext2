@@ -42,3 +42,7 @@ Bool device_read(void * buffer,uint32_t size)
 
 
 
+void device_fflush()
+{
+    fflush(fp);
+}

@@ -17,6 +17,8 @@
 #define NUM_GROUP             (DISK_SIZE/BLOCKS_PER_GROUP)     // 块组数目
 
 
+#define INODE_ROOT_INO       1            // 根目录的ino号定为1
+
 
 // 后续可以引入锁机制
 // TODO:考虑数据同步性的问题（啥时候将数据同步到磁盘中）
@@ -54,6 +56,16 @@ void read_group_desc();
 int update_group_desc();
 
 
+
+
+
+void read_block_bitmap(void * buffer, uint32_t group_number);
+
+
+
+void read_inode_bitmap(void * buffer, uint32_t group_number);
+void inode_bitmap_set(uint32_t ino,uint8_t state);
+uint32_t get_unused_inode(uint32_t group_number);
 
 
 #endif

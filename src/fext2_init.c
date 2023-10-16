@@ -34,10 +34,10 @@ int init_meta_info()
      for (size_t i = 0; i < groups_nums; i++)
      {
 
-        fext2_groups_table[i].bg_block_bitmap = i * BLOCKS_PER_GROUP + 4;
-        fext2_groups_table[i].bg_inode_bitmap = i * BLOCKS_PER_GROUP + 5;
-        fext2_groups_table[i].bg_inode_table  = i * BLOCKS_PER_GROUP + 6;
-        // 7代表的是 1块存储超级块 4块存储 组描述符 2块存储 位图 1+2+4 再减去inode表
+        fext2_groups_table[i].bg_block_bitmap = i * BLOCKS_PER_GROUP + 5;
+        fext2_groups_table[i].bg_inode_bitmap = i * BLOCKS_PER_GROUP + 6;
+        fext2_groups_table[i].bg_inode_table  = i * BLOCKS_PER_GROUP + 7;
+        // 7代表的是 1块存储超级块 4块存储组描述符 2块存储 位图 1+2+4 再减去inode表
         fext2_groups_table[i].bg_free_blocks_count = BLOCKS_PER_GROUP -(INODES_PER_GROUP/(BLOCK_SIZE/sizeof(struct fext2_inode)))- 7;
         fext2_groups_table[i].bg_free_inodes_count = INODES_PER_GROUP;
         fext2_groups_table[i].bg_used_dirs_count = 0;
