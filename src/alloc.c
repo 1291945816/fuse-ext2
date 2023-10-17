@@ -1,5 +1,6 @@
 
 #include<stdio.h>
+#include "debug.h"
 #include "fuse-ext2/fext2.h"
 #include "device.h"
 
@@ -11,9 +12,9 @@ void read_inode_bitmap(void * buffer, uint32_t group_number)
         fprintf(stderr,"offer group number > total!\n");
         return;
     }
-
-    uint32_t block_number = fext2_groups_table[group_number].bg_inode_bitmap;
     
+    uint32_t block_number = fext2_groups_table[group_number].bg_inode_bitmap;
+    DBG_PRINT("%d\n", (fext2_groups_table == NULL));
     // 块号是绝对的而不是相对块地址的
     device_seek(block_number*BLOCK_SIZE);
     device_read(buffer,BLOCK_SIZE);
@@ -28,7 +29,7 @@ void read_block_bitmap(void * buffer, uint32_t group_number)
     }
 
     uint32_t block_number = fext2_groups_table[group_number].bg_block_bitmap;
+
     device_seek(block_number*BLOCK_SIZE);
     device_read(buffer,BLOCK_SIZE);
-
 }

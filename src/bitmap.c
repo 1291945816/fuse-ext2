@@ -9,6 +9,7 @@
  */
 int get_zero_bit(uint8_t * buffer)
 {
+    
     // 每组有多少个块号是固定的
     for (uint32_t i = 0; i < BLOCK_SIZE; i++)
     {
@@ -37,6 +38,8 @@ int get_zero_bit(uint8_t * buffer)
 
 void  bitmap_set(uint8_t * buffer,uint32_t index)
 {
+    if (index >= BLOCK_SIZE*8)
+        return;
 
     int i = index / 8; 
     int j = index % 8; 
@@ -54,6 +57,8 @@ void  bitmap_set(uint8_t * buffer,uint32_t index)
  */
 void  bitmap_clear(uint8_t * buffer,uint32_t index)
 {
+    if (index >= BLOCK_SIZE*8)
+        return;
     int i = index / 8; 
     int j = index % 8; 
     uint8_t tmp=buffer[i];

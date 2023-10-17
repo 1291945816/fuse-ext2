@@ -1,12 +1,23 @@
 
+#include "bitmap.h"
+#include "debug.h"
 #include"device.h"
 #include"fuse-ext2/types.h"
 #include"fuse-ext2/fext2.h"
 
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/types.h>
+
+
+
+
+
 int main()
 {
 
-    // device_open("/home/psong/fuse-ext2/image/fext2");
+
+    device_open("/home/psong/fuse-ext2/image/fext2");
 
     // Bool state = device_seek(1024);
 
@@ -21,16 +32,18 @@ int main()
     // device_close();
     // read_group_desc();
 
-    // read_superblock();
-    // read_group_desc();
-    // device_close(fp);
+    read_superblock();
+    read_group_desc();
 
-    uint8_t t = -1;
+    uint8_t buffer[BLOCK_SIZE];
 
+    read_inode_bitmap(buffer, 0);
+    print(buffer,BLOCK_SIZE);
+
+
+
+    device_close();
     
-
-
-    printf("%d",t == -1);
 
     
 

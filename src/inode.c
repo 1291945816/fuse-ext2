@@ -8,8 +8,8 @@
 
 
 /**
- * @brief Get the unused inode object 获取没有使用的inode ino
- * 
+ * @brief Get the unused inode object 
+ * 获取没有使用的inode ino
  * @param group_number 
  * @return uint32_t 
  */
@@ -32,7 +32,8 @@ uint32_t get_unused_inode(uint32_t group_number)
 
 /**
  * @brief 
- * 
+ * 根据inode提供的状态，设置其位图上的状态
+ * 同时会同步到磁盘中 而块组描述符号的数据并没同步到磁盘中
  * @param ino 
  * @param state 
  */

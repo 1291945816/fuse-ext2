@@ -92,6 +92,7 @@ struct fext2_inode
 
 #define FEXT2_MAX_NAME_LEN    255
 
+// 同一级的目录都会存在一个块中 所以找同一级的所有的文件or目录的时候都可以通过base+rec_len进行处理
 struct fext2_dir_entry
 {
     uint32_t inode;                        // inode 号

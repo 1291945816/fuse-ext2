@@ -7,13 +7,18 @@
 #include "debug.h"
 #include "device.h"
 
+// static 函数会隐藏具体的内容
+struct fext2_super_block fext2_sb; 
+struct fext2_group_desc *fext2_groups_table;    // ！文件系统退出时要记得移除内存
+
+
 int read_superblock()
 {
 
     device_seek(0*BLOCK_SIZE);
     device_read(&fext2_sb,sizeof(struct fext2_super_block));
     DBG_PRINT("filesystem name: %s\n",fext2_sb.s_volume_name);
-
+    i = 100;    
     // // 判断幻数来确保系统是否已经初始化了
     if (fext2_sb.s_magic != FILESYSTEM_MAGIC)
     {
@@ -28,18 +33,9 @@ void read_group_desc()
 {
     if (!fext2_groups_table)
         fext2_groups_table = (struct fext2_group_desc *)malloc(sizeof(struct fext2_group_desc) * NUM_GROUP);
-
+    
     device_seek(BLOCK_SIZE);
     device_read(fext2_groups_table,NUM_GROUP*sizeof(struct fext2_group_desc));
-
-#ifdef FEXT2_DEBUG
-    for (size_t i = 0; i < NUM_GROUP; i++)
-    {
-
-        DBG_PRINT("%d\n",fext2_groups_table[i].bg_block_bitmap);
-    }
-#endif
-
 }
 
 
