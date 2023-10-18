@@ -73,4 +73,8 @@ void block_bitmap_set(uint32_t block_index,uint8_t state);
 int32_t get_unused_inode(uint32_t group_number);
 int32_t get_unused_block(uint32_t group_number);
 
+
+// 构建目录项
+
+
 #endif

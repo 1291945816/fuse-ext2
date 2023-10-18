@@ -37,7 +37,11 @@ int main()
 
     uint8_t buffer[BLOCK_SIZE];
 
-    read_inode_bitmap(buffer, 0);
+    read_block_bitmap(buffer, 1);
+    int32_t block_index=get_unused_block(1);
+    DBG_PRINT("%d", block_index);
+    block_bitmap_set(block_index, 1);
+    read_block_bitmap(buffer, 1);
     print(buffer,BLOCK_SIZE);
 
 

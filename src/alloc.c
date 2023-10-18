@@ -49,7 +49,7 @@ int32_t get_unused_block(uint32_t group_number)
     int32_t block_no = get_zero_bit(buffer);
 
     // 直接返回即可
-    return block_no;
+    return block_no == -1 ? -1: (block_no + group_number*fext2_sb.s_blocks_per_group);
 }
 
 /**

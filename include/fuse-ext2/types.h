@@ -61,7 +61,7 @@ struct fext2_group_desc
 
 
 
-#define FEXT2_N_BLOCKS     8               // 能够直接索引的数据块数目
+#define FEXT2_N_BLOCKS     8               // 数据块数目 包含7个直接索引+1个间接索引
 
 
 
@@ -95,7 +95,7 @@ struct fext2_inode
 // 同一级的目录都会存在一个块中 所以找同一级的所有的文件or目录的时候都可以通过base+rec_len进行处理
 struct fext2_dir_entry
 {
-    uint32_t inode;                        // inode 号
+    uint32_t ino;                        // inode 号 ino更具辨识度
     uint16_t rec_len;                      // 目录项长度
     uint8_t  name_len;                     // 名字长度
     uint8_t  file_type;                    // 文件类型 1. 常规文件  2. 目录文件
