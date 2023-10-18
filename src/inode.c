@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -13,16 +14,16 @@
  * @param group_number 
  * @return uint32_t 
  */
-uint32_t get_unused_inode(uint32_t group_number)
+int32_t get_unused_inode(uint32_t group_number)
 {
     uint8_t buffer[BLOCK_SIZE];
     read_inode_bitmap(buffer,group_number);
 
     int index = get_zero_bit(buffer);
 
-    // 0 表示 ino号没有分配 默认 0 为不使用
+    // -1 表示 ino号没有分配 默认 0 为不使用
     if (index == -1)
-        return 0;
+        return -1;
 
     //比如组2 index 3 组2的起始ino号为 8192 * 2 + 3
     uint32_t ino = index + group_number * fext2_sb.s_inodes_per_group;

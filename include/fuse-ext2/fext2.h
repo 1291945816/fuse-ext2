@@ -69,8 +69,8 @@ void read_block_bitmap(void * buffer, uint32_t group_number);
 
 void read_inode_bitmap(void * buffer, uint32_t group_number);
 void inode_bitmap_set(uint32_t ino,uint8_t state);
-
-uint32_t get_unused_inode(uint32_t group_number);
-uint32_t get_unused_block(uint32_t group_number);
+void block_bitmap_set(uint32_t block_index,uint8_t state);
+int32_t get_unused_inode(uint32_t group_number);
+int32_t get_unused_block(uint32_t group_number);
 
 #endif
