@@ -32,18 +32,30 @@ int main()
     // device_close();
     // read_group_desc();
 
-    read_superblock();
-    read_group_desc();
+    // read_superblock();
+    // read_group_desc();
 
-    uint8_t buffer[BLOCK_SIZE];
+    // uint8_t buffer[BLOCK_SIZE];
 
-    read_block_bitmap(buffer, 1);
-    int32_t block_index=get_unused_block(1);
-    DBG_PRINT("%d", block_index);
-    block_bitmap_set(block_index, 1);
-    read_block_bitmap(buffer, 1);
-    print(buffer,BLOCK_SIZE);
+    // read_block_bitmap(buffer, 0);
+    // block_bitmap_set(9, 0);
+    // read_block_bitmap(buffer, 0);
+    // print(buffer,BLOCK_SIZE);
 
+    // 构建一个inode
+    struct fext2_inode inode;
+
+    fext2_groups_table[0].
+
+
+
+    // uint32_t block_data[256];
+    // block_data[0]=3;         // 表示数据块中的第三个块 
+
+    
+
+
+    
 
 
     device_close();

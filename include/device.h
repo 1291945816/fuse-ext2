@@ -57,6 +57,15 @@ Bool device_read(void * buffer,uint32_t size);
  */
 void device_fflush();
 
+/**
+ * @brief 
+ * 按指定字节读取数据
+ * @param buffer 存储数据的缓冲区
+ * @param read_byte 每次读取的字节数
+ * @param size 要读取的大小
+ * @return Bool 
+ */
+Bool device_read_byte(void * buffer,uint32_t size,uint32_t n);
 
 
 

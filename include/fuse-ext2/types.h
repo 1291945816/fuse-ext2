@@ -96,10 +96,10 @@ struct fext2_inode
 struct fext2_dir_entry
 {
     uint32_t ino;                        // inode 号 ino更具辨识度
-    uint16_t rec_len;                      // 目录项长度
+    uint16_t rec_len;                      // 目录项长度 [用于可变长度]
     uint8_t  name_len;                     // 名字长度
     uint8_t  file_type;                    // 文件类型 1. 常规文件  2. 目录文件
-    char     file_name[FEXT2_MAX_NAME_LEN];// 可以使用可变长度的数组（暂时不用）
+    char     file_name[FEXT2_MAX_NAME_LEN];// 可以使用可变长度的数组（暂时不用,现在是固定大小的）
 
 };
 

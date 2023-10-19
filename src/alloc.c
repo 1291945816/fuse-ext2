@@ -40,30 +40,30 @@ void read_block_bitmap(void * buffer, uint32_t group_number)
  * @brief
  * 根据块号分配一个未使用的块
  * @param group_number 块组号
- * @return int32_t 返回块号id 
+ * @return int32_t 返回数据块号id 注意 数据块号是从1开始的！ 
  */
-int32_t get_unused_block(uint32_t group_number)
+uint32_t get_unused_block(uint32_t group_number)
 {
     uint8_t buffer[BLOCK_SIZE]={0};
     read_block_bitmap(buffer, group_number);
     int32_t block_no = get_zero_bit(buffer);
 
     // 直接返回即可
-    return block_no == -1 ? -1: (block_no + group_number*fext2_sb.s_blocks_per_group);
+    return block_no == -1 ? 0: (block_no+1 + group_number*fext2_sb.s_blocks_per_group);
 }
 
 /**
  * @brief 
  * 更新位图数据 
- * @param block_index 绝对编号
+ * @param block_index 绝对编号 id 是从1开始的
  * @param state 位图状态
  */
 void block_bitmap_set(uint32_t block_index,uint8_t state)
 {
     // 获取位图 需要知道组号
     uint8_t buffer[BLOCK_SIZE]={0};
-    uint32_t group_number = block_index / fext2_sb.s_blocks_per_group;
-    uint32_t index = block_index % fext2_sb.s_blocks_per_group;
+    uint32_t group_number = (block_index-1) / fext2_sb.s_blocks_per_group;
+    uint32_t index = (block_index-1) % fext2_sb.s_blocks_per_group;
 
     read_block_bitmap(buffer, group_number);
 

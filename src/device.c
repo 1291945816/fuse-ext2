@@ -1,5 +1,7 @@
 #include"device.h"
 #include "debug.h"
+#include "fuse-ext2/types.h"
+#include <stdint.h>
 
 Bool device_open(const char * file_path)
 {
@@ -41,8 +43,15 @@ Bool device_read(void * buffer,uint32_t size)
 }
 
 
+Bool device_read_byte(void * buffer,uint32_t read_byte,uint32_t size)
+{
+    size_t  read_count = fread(buffer,read_byte,size,fp);
+    return read_count == size;
+}
+
 
 void device_fflush()
 {
     fflush(fp);
 }
+

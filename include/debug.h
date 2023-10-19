@@ -25,7 +25,7 @@
  * @param buffer 位图数据
  * @param num 大小
  */
-static void print(uint8_t *buffer,uint32_t num)
+static inline void print(uint8_t *buffer,uint32_t num)
 {
     for (int i= 0; i < num ; i++) 
     {
