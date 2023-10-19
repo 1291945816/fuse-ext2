@@ -13,7 +13,7 @@
  * @brief Get the unused inode object 
  * 获取没有使用的inode ino
  * @param group_number 
- * @return uint32_t 
+ * @return uint32_t 0 表示没有空余空间了
  */
 uint32_t get_unused_inode(uint32_t group_number)
 {
@@ -94,4 +94,39 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const struct 
         read_data_block(block,tmp_block[offset]);
         // device_read_byte(tmp_block,sizeof(uint32_t),BLOCK_SIZE/sizeof(uint32_t));
     }
+}
+
+/**
+ * @brief 
+ * 从索引节点表中读inode数据
+ * @param ino 分配的ino号
+ * @return struct fext2_inode* 
+ */
+struct fext2_inode *  read_inode(uint32_t ino)
+{
+
+
+    // 
+    uint32_t group_number = (ino-1)/fext2_sb.s_inodes_per_group;
+    if (group_number >= NUM_GROUP) 
+        return NULL;
+    /*偏移 代表第几个inode*/
+    uint32_t offset = (ino-1)%fext2_sb.s_inodes_per_group; 
+    if (offset >= fext2_sb.s_inodes_per_group)
+        return NULL;
+    /*索引表起始地址*/
+    uint32_t base = fext2_groups_table[group_number].bg_inode_table;
+
+    struct fext2_inode* ret = (struct fext2_inode *)malloc(sizeof(struct fext2_inode));
+
+
+    uint32_t block_num = offset/(BLOCK_SIZE/sizeof(struct fext2_inode));
+    uint32_t block_offset = offset%(BLOCK_SIZE/sizeof(struct fext2_inode));
+    
+    // 读取数据
+    device_seek((base+block_num)*BLOCK_SIZE + (block_offset*sizeof(struct fext2_inode)));
+    device_read(ret, sizeof(struct fext2_inode));
+    // device_read_byte(, uint32_t size, uint32_t n);
+
+    return ret;
 }

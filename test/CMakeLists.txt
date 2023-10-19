@@ -7,6 +7,7 @@ add_executable(test ../src/device.c
                     ../src/alloc.c
                     ../src/bitmap.c
                     ../src/inode.c
+                    ../src/utils.c
                     test.c)
 
 # 针对目标增加的搜索路径

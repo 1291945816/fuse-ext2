@@ -73,6 +73,7 @@ void block_bitmap_set(uint32_t block_index,uint8_t state);
 uint32_t get_unused_inode(uint32_t group_number);
 uint32_t get_unused_block(uint32_t group_number);
 
+struct fext2_inode *  read_inode(uint32_t ino);
 
 // 读取inode数据块的内容（涵盖间接块）
 Bool read_inode_data_block(void * block,uint32_t data_block_index, const  struct fext2_inode * inode );
