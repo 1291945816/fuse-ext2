@@ -1,6 +1,8 @@
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <time.h>
@@ -22,7 +24,7 @@ int main()
 {
 
 
-    device_open("/home/psong/fuse-ext2/image/fext2");
+    // device_open("/home/psong/fuse-ext2/image/fext2");
 
     // Bool state = device_seek(1024);
 
@@ -37,8 +39,8 @@ int main()
     // device_close();
     // read_group_desc();
 
-    read_superblock();
-    read_group_desc();
+    // read_superblock();
+    // read_group_desc();
 
 
     /*测试读取inode块*/
@@ -69,9 +71,9 @@ int main()
 
 
 
-    uint8_t buffer[BLOCK_SIZE];
+    // uint8_t buffer[BLOCK_SIZE];
 
-    read_inode_bitmap(buffer, 0);
+    // read_inode_bitmap(buffer, 0);
 
     /*获取空的块号*/
     // uint32_t block_no = get_unused_block(0);
@@ -79,7 +81,7 @@ int main()
     // struct fext2_inode inode;
     // uint32_t block_data[256];
     // block_data[0]=block_no; //7
-    print(buffer, BLOCK_SIZE);
+    // print(buffer, BLOCK_SIZE);
 
 
     // DBG_PRINT("%u", fext2_groups_table[0].bg_free_blocks_count);
@@ -141,6 +143,13 @@ int main()
     // free(fext2_groups_table);
 
     // device_close();
+
+    int a[10]={1,2,3,4};
+    int *p = (int *)a;
+    printf("%d ",*(p+1));
+    printf("%d",*((int*)((void *)p+sizeof(int)*2)));
+
+
 
     
 

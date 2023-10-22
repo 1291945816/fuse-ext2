@@ -117,6 +117,7 @@ struct fext2_inode *  read_inode(uint32_t ino)
     /*索引表起始地址*/
     uint32_t base = fext2_groups_table[group_number].bg_inode_table;
 
+    // 获得该节点的 需要记得释放
     struct fext2_inode* ret = (struct fext2_inode *)malloc(sizeof(struct fext2_inode));
 
 
@@ -126,7 +127,6 @@ struct fext2_inode *  read_inode(uint32_t ino)
     // 读取数据
     device_seek((base+block_num)*BLOCK_SIZE + (block_offset*sizeof(struct fext2_inode)));
     device_read(ret, sizeof(struct fext2_inode));
-    // device_read_byte(, uint32_t size, uint32_t n);
 
     return ret;
 }

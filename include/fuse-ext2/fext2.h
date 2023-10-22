@@ -73,6 +73,7 @@ void block_bitmap_set(uint32_t block_index,uint8_t state);
 uint32_t get_unused_inode(uint32_t group_number);
 uint32_t get_unused_block(uint32_t group_number);
 
+
 struct fext2_inode *  read_inode(uint32_t ino);
 
 // 读取inode数据块的内容（涵盖间接块）
@@ -83,7 +84,7 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const  struct
 
 // 构建目录项 根目录如何获得？ 如果确定是否是目录 ？
 // TODO:难点： 从inode 构建目录项 
-struct fext2_dir_entry * next_entry( struct fext2_inode * dir,struct fext2_dir_entry * cur);
-struct fext2_dir_entry * find_entry(struct fext2_inode * dir, char * name);
+
+struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name);
 
 #endif
