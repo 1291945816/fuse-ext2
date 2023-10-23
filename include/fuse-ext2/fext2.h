@@ -85,6 +85,10 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const  struct
 // 构建目录项 根目录如何获得？ 如果确定是否是目录 ？
 // TODO:难点： 从inode 构建目录项 
 
-struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name);
+
+struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,fext2_entry_helper * out_data);
+
+struct fext2_dir_entry * previous_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
+struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
 
 #endif

@@ -11,6 +11,12 @@ typedef enum Bool
 }Bool;
 
 
+/*TODO: 可以作为fext2的一部分 */
+typedef struct fext2_entry_helper{
+    uint32_t block_number;            // 所在块号[利用该块号获取数据]
+    uint32_t offset;                  // 块内偏移
+}fext2_entry_helper;
+
 
 
 
@@ -93,6 +99,7 @@ struct fext2_inode
 #define FEXT2_MAX_NAME_LEN    255
 
 // 同一级的目录都会存在一个块中 所以找同一级的所有的文件or目录的时候都可以通过base+rec_len进行处理
+// TODO:在ext2文件系统中 该项必须是4的倍数
 struct fext2_dir_entry
 {
     uint32_t ino;                        // inode 号 ino更具辨识度
