@@ -143,6 +143,13 @@ struct fext2_dir_entry * previous_entry(struct fext2_inode * dir,const fext2_ent
  */
 struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data)
 {
+
+    if (!cur_entry_data) 
+        return NULL;
+    
+    uint8_t buffer[BLOCK_SIZE]={0};
+    struct fext2_dir_entry * entry=NULL;
+
     // 考虑边界情况 最后一页 最后一个
     if (cur_entry_data->block_number == dir->i_blocks-1 && 
        (BLOCK_SIZE - cur_entry_data->offset) < sizeof(struct fext2_dir_entry)) 
@@ -152,18 +159,25 @@ struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_h
     else if ( cur_entry_data->block_number != dir->i_blocks-1 &&
       (BLOCK_SIZE - cur_entry_data->offset) < sizeof(struct fext2_dir_entry)) /*最后一个 但有下一页*/
     {
-
-    
+        
+        read_inode_data_block(buffer, cur_entry_data->block_number + 1, dir);
+        // 找到第一个
+        entry = (struct fext2_dir_entry *)buffer;
     }
     else // 其他情况
     {
-    
+        read_inode_data_block(buffer, cur_entry_data->block_number, dir);
+        uint32_t next_offset = cur_entry_data->offset + sizeof(struct fext2_dir_entry);
+        entry = (struct fext2_dir_entry*)((void*)buffer + next_offset);
     }
 
-
-
-
-    return NULL;
+    struct fext2_dir_entry * ret_entry = (struct fext2_dir_entry *) malloc(sizeof(struct fext2_dir_entry));
+    memcpy(ret_entry->file_name,entry->file_name, entry->name_len);
+    ret_entry->file_type = entry->file_type;
+    ret_entry->name_len = entry->name_len;
+    ret_entry->ino = entry->ino;
+    ret_entry->rec_len = entry->rec_len;
+    return ret_entry;
 }
 
 

@@ -17,7 +17,7 @@
 #define NUM_GROUP                   (DISK_SIZE/BLOCKS_PER_GROUP)     // 块组数目
 #define DATA_BLOCK_BASE_PER_GROUP   519                            //   数据块起始地址 组内块号偏移
 
-#define INODE_ROOT_INO       1            // 根目录的ino号定为1
+#define INODE_ROOT_INO       2            // 根目录的ino号定为2
 
 
 // 后续可以引入锁机制
@@ -75,6 +75,8 @@ uint32_t get_unused_block(uint32_t group_number);
 
 
 struct fext2_inode *  read_inode(uint32_t ino);
+/*TODO:写inode*/
+
 
 // 读取inode数据块的内容（涵盖间接块）
 Bool read_inode_data_block(void * block,uint32_t data_block_index, const  struct fext2_inode * inode );
@@ -82,13 +84,12 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const  struct
 
 
 
-// 构建目录项 根目录如何获得？ 如果确定是否是目录 ？
-// TODO:难点： 从inode 构建目录项 
-
 
 struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,fext2_entry_helper * out_data);
-
 struct fext2_dir_entry * previous_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
 struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
+
+/*TODO:增加目录项*/
+/*TODO:删除目录项*/
 
 #endif

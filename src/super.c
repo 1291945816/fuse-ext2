@@ -24,6 +24,7 @@ int read_superblock()
     {
         // 初始化文件系统的基本信息
         init_meta_info();
+                
     }
     
 }

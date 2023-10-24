@@ -24,7 +24,7 @@ int main()
 {
 
 
-    // device_open("/home/psong/fuse-ext2/image/fext2");
+    device_open("/home/psong/fuse-ext2/image/fext2");
 
     // Bool state = device_seek(1024);
 
@@ -33,7 +33,7 @@ int main()
     // device_close();
     
     // printf("%lu", sizeof(struct fext2_inode));
-    // erase_disk();
+    erase_disk();
     // init_meta_info();
     // read_superblock();
     // device_close();
@@ -142,12 +142,8 @@ int main()
     
     // free(fext2_groups_table);
 
-    // device_close();
+    device_close();
 
-    int a[10]={1,2,3,4};
-    int *p = (int *)a;
-    printf("%d ",*(p+1));
-    printf("%d",*((int*)((void *)p+sizeof(int)*2)));
 
 
 
