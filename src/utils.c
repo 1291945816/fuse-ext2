@@ -13,6 +13,7 @@ Bool read_data_block(void * block,uint32_t block_number)
 
     device_seek((DATA_BLOCK_BASE_PER_GROUP + block_number-1) * BLOCK_SIZE);
     device_read(block, BLOCK_SIZE);
+    return TRUE;
 }
 
 

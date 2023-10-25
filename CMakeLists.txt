@@ -5,7 +5,7 @@ set(CMAKE_C_EXTENSIONS  OFF)
 
 
 #  增加一个子目录
-add_subdirectory(${PROJECT_SOURCE_DIR}/src )
+add_subdirectory(${PROJECT_SOURCE_DIR}/src out)
 
 #  用以测试
 add_subdirectory(${PROJECT_SOURCE_DIR}/test)

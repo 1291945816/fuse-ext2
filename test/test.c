@@ -13,6 +13,7 @@
 #include "utils.h"
 #include"fuse-ext2/types.h"
 #include"fuse-ext2/fext2.h"
+#include "fuse-ext2/fext2_init.h"
 
 
 
@@ -25,6 +26,19 @@ int main()
 
 
     device_open("/home/psong/fuse-ext2/image/fext2");
+    read_superblock();
+    read_group_desc();
+
+    struct fext2_inode *root =  read_inode(2);
+    // DBG_PRINT("%d", fext2_groups_table[0].bg_free_inodes_count);
+    // uint8_t buffer[BLOCK_SIZE];
+    // read_block_bitmap(buffer, 0);
+    // print(buffer,BLOCK_SIZE);
+
+
+
+
+
 
     // Bool state = device_seek(1024);
 
@@ -33,7 +47,7 @@ int main()
     // device_close();
     
     // printf("%lu", sizeof(struct fext2_inode));
-    erase_disk();
+    // erase_disk();
     // init_meta_info();
     // read_superblock();
     // device_close();

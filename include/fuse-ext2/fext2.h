@@ -25,7 +25,6 @@
 extern struct fext2_super_block fext2_sb; 
 extern struct fext2_group_desc *fext2_groups_table;    // ！文件系统退出时要记得移除内存
 
-static int i = 0;
 
 
 /**
@@ -75,7 +74,8 @@ uint32_t get_unused_block(uint32_t group_number);
 
 
 struct fext2_inode *  read_inode(uint32_t ino);
-/*TODO:写inode*/
+/*TODO:写inode到磁盘中*/
+uint32_t write_inode(const struct fext2_inode * inode,uint32_t ino);
 
 
 // 读取inode数据块的内容（涵盖间接块）

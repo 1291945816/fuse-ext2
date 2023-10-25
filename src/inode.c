@@ -120,7 +120,7 @@ struct fext2_inode *  read_inode(uint32_t ino)
     // 获得该节点的 需要记得释放
     struct fext2_inode* ret = (struct fext2_inode *)malloc(sizeof(struct fext2_inode));
 
-
+    /*块内偏移*/
     uint32_t block_num = offset/(BLOCK_SIZE/sizeof(struct fext2_inode));
     uint32_t block_offset = offset%(BLOCK_SIZE/sizeof(struct fext2_inode));
     
@@ -129,4 +129,29 @@ struct fext2_inode *  read_inode(uint32_t ino)
     device_read(ret, sizeof(struct fext2_inode));
 
     return ret;
+}
+
+/**
+ * @brief 
+ * 向磁盘文件同步数据
+ * @param inode 含数据的inode
+ * @param ino 具体的ino号 从1开始
+ * @return uint32_t 
+ */
+uint32_t write_inode(const struct fext2_inode * inode,uint32_t ino)
+{
+    
+    uint32_t group_number = (ino-1)/fext2_sb.s_inodes_count;
+    if (group_number >= NUM_GROUP) 
+        return 0;
+    uint32_t offset =(ino-1)%fext2_sb.s_inodes_count;
+
+    uint32_t base = fext2_groups_table[group_number].bg_inode_table;
+
+    uint32_t block_num = offset/(BLOCK_SIZE/sizeof(struct fext2_inode));
+    uint32_t block_offset = offset%(BLOCK_SIZE/sizeof(struct fext2_inode));
+
+    device_seek((base+block_num)*BLOCK_SIZE + (block_offset * sizeof(struct fext2_inode)));
+    device_write((void *)inode, sizeof(struct fext2_inode));
+    device_fflush();
 }
