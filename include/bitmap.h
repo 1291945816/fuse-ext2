@@ -1,7 +1,7 @@
 #ifndef INCLUDE_BITMAP_H
 #define INCLUDE_BITMAP_H
 
-#include<stdint.h>
+#include "common.h"
 
 
 

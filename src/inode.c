@@ -1,6 +1,4 @@
-#include <stdint.h>
-#include <unistd.h>
-#include <stdlib.h>
+
 
 
 #include "fuse-ext2/fext2.h"

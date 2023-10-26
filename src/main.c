@@ -1,16 +1,47 @@
-#define FUSE_USE_VERSION      26
-
-#include<stdio.h>
-#include<time.h>
-#include <fuse/fuse.h>
-
-#include"fuse-ext2/types.h"
+#include "common.h"
+#include "debug.h"
 #include "device.h"
+#include "fuse-ext2/fext2.h"
+#include <stddef.h>
+#include <string.h>
 
-
-static struct fuse_operations fext2_oper = {};
+static struct fuse_operations fext2_oper = {
+    .init = fext2_init // 初始化
+    
+};
 
 int main(int argc,char * argv[])
 {
+    
+
+
+    // 需要先打开设备文件
+    int i = 1;
+    for (;i < argc;++i)
+        if (memcmp(argv[i], "--mount_image", sizeof("--mount_image")) == 0) 
+            break;
+    if (i == argc) {
+        DBG_PRINT("you need to add mount_image by `--mount_image`!");
+        return -1;
+    }
+    else  // 尝试打开设备
+    {
+        
+        if (!device_open(argv[i+1]))
+        {
+            DBG_PRINT("can't open the %s!",argv[i+1]);
+            return -1;  
+        }
+            
+        else
+        {
+            for (; i < argc-2; ++i) {
+                argv[i] = argv[i+2]; // xx xxx xxx 
+            }
+            argc -= 2;
+        };
+    }
     return fuse_main(argc, argv, &fext2_oper, NULL);
 }
+
+

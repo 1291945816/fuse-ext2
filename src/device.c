@@ -1,7 +1,8 @@
+
 #include"device.h"
 #include "debug.h"
 #include "fuse-ext2/types.h"
-#include <stdint.h>
+
 
 Bool device_open(const char * file_path)
 {

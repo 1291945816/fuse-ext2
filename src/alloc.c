@@ -1,7 +1,5 @@
 
-#include <asm-generic/errno.h>
-#include <stdint.h>
-#include<stdio.h>
+
 #include "bitmap.h"
 #include "debug.h"
 #include "fuse-ext2/fext2.h"

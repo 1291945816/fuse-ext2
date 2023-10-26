@@ -4,8 +4,8 @@
 
 #ifndef INCLUDE_UTILS_DEVICE_H
 #define INCLUDE_UTILS_DEVICE_H
+#include "common.h"
 #include "fuse-ext2/types.h"
-#include<stdio.h>
 
 
 static FILE * fp;  

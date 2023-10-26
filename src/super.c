@@ -1,11 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/stat.h>
+
 
 
 #include "fuse-ext2/fext2_init.h"

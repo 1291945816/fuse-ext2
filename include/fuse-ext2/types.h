@@ -2,7 +2,7 @@
 
 #ifndef INCLUDE_FUSE_EXT2_TYPES_H
 #define INCLUDE_FUSE_EXT2_TYPES_H
-#include<stdint.h>
+#include "common.h"
 
 typedef enum Bool
 {

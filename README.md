@@ -20,3 +20,19 @@ touch fext2
 # 生成一个1GB大小的文件 块大小为1KB
 dd if=/dev/zero of=fext2 bs=1024 count=1048576
 ```
+
+### 挂载文件系统
+> 编译后的文件系统名称为 fuse-ext2
+- `${mount_point}`：挂载点 
+- `${mount_image}`：指定要求生成的镜像文件
+
+```shell
+./fuse-ext2 ${mount_point} --mount_image ${mount_image} 
+```
+
+**一个例子**
+> 假设 在所挂载的文件系统路径下 存在一个模拟该文件系统所管理的磁盘文件
+```shell
+mkdir test 
+./fuse-ext2 test --mount_image fext2
+```

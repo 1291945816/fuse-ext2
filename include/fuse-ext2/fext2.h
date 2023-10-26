@@ -1,9 +1,8 @@
 #ifndef INCLUDE_FUSE_EXT2_FEXT2_H
 #define INCLUDE_FUSE_EXT2_FEXT2_H
 
-
+#include "common.h"
 #include"types.h"
-#include <stdint.h>
 
 
 #define  FILESYSTEM_MAGIC     1509          // 文件系统幻数
@@ -74,7 +73,6 @@ uint32_t get_unused_block(uint32_t group_number);
 
 
 struct fext2_inode *  read_inode(uint32_t ino);
-/*TODO:写inode到磁盘中*/
 uint32_t write_inode(const struct fext2_inode * inode,uint32_t ino);
 
 
@@ -92,4 +90,8 @@ struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_h
 /*TODO:增加目录项*/
 /*TODO:删除目录项*/
 
+
+
+/*文件系统操作*/
+void * fext2_init(struct fuse_conn_info *conn);
 #endif

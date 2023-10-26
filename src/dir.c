@@ -1,8 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
+
 
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"

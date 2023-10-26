@@ -1,6 +1,6 @@
-#include <stdint.h>
 
 
+#include "common.h"
 #include "device.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"

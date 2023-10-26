@@ -1,7 +1,6 @@
 #ifndef INCLUDE__DEBUG_H
 #define INCLUDE__DEBUG_H
-#include <stdint.h>
-#include <stdio.h>
+#include "common.h"
 /**
  * 方便调试输出
 */

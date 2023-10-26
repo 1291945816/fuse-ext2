@@ -1,10 +1,9 @@
-#include<string.h>
-#include<stdio.h>
-#include<stdlib.h>
+
 
 #include "fuse-ext2/fext2_init.h"
 #include "device.h"
 #include "debug.h"
+
 int init_meta_info()
 {
     /*super block*/
