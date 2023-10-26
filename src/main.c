@@ -2,11 +2,11 @@
 #include "debug.h"
 #include "device.h"
 #include "fuse-ext2/fext2.h"
-#include <stddef.h>
-#include <string.h>
+
 
 static struct fuse_operations fext2_oper = {
-    .init = fext2_init // 初始化
+    .init = fext2_init, // 初始化
+    .destroy = fext2_destory
     
 };
 

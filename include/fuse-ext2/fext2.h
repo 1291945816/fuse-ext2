@@ -86,12 +86,13 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const  struct
 struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,fext2_entry_helper * out_data);
 struct fext2_dir_entry * previous_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
 struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
-
+/*TODO:根据路径path 获取ino*/
 /*TODO:增加目录项*/
 /*TODO:删除目录项*/
 
 
 
 /*文件系统操作*/
-void * fext2_init(struct fuse_conn_info *conn);
+void*  fext2_init(struct fuse_conn_info *conn); /*文件系统的初始化*/
+void   fext2_destory(void * );/*清除文件系统挂载信息以及在内存驻留的信息*/
 #endif
