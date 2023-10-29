@@ -29,7 +29,17 @@ int main()
     read_superblock();
     read_group_desc();
 
-    struct fext2_inode *root =  read_inode(2);
+
+    // 查找 /A/B
+    // 先获取根目录的数据
+    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
+    char * path = "/ABC/"; // ABC/
+    uint32_t result = lookup_inode_by_name(root_dir,path+1);
+    DBG_PRINT("%d",result);
+
+
+
+    // struct fext2_inode *root =  read_inode(2);
     // DBG_PRINT("%d", fext2_groups_table[0].bg_free_inodes_count);
     // uint8_t buffer[BLOCK_SIZE];
     // read_block_bitmap(buffer, 0);

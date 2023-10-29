@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include"types.h"
+#include <stdint.h>
 
 
 #define  FILESYSTEM_MAGIC     1509          // 文件系统幻数
@@ -87,6 +88,8 @@ struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,
 struct fext2_dir_entry * previous_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
 struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data);
 /*TODO:根据路径path 获取ino*/
+
+uint32_t lookup_inode_by_name(struct fext2_inode * dir, const char * child);
 /*TODO:增加目录项*/
 /*TODO:删除目录项*/
 

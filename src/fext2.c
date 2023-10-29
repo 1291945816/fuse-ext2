@@ -14,6 +14,7 @@ void * fext2_init(struct fuse_conn_info *conn)
     DBG_PRINT("successfully.\n");
 
 }
+
 void fext2_destory(void * data)
 {
     // 同步数据

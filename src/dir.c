@@ -3,6 +3,9 @@
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
 #include "utils.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
  * @brief 
@@ -176,4 +179,39 @@ struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_h
     return ret_entry;
 }
 
+uint32_t lookup_inode_by_name(struct fext2_inode *dir, const char *child)
+{
+    
+    int len = strlen(child);
+    // / A/B/C  A B/C  B C C 分别拆解 /AB/
+    // 获取目录前可以先移除了最后一个字符的/
+    int index = find_char(child, '/');
+    fext2_entry_helper help_data;
+    if (index == -1) { // 最后一层目录
 
+        struct fext2_dir_entry *entry = find_entry(dir, child, &help_data);
+        if (entry == NULL) {
+            return 0;
+        }
+        // struct fext2_inode* next_inode =read_inode(entry->ino);
+        uint32_t ino = entry->ino;
+        free(entry); // 释放对应的目录项
+        return ino;
+    } 
+    else
+    {
+        char name[index + 1];
+        memset(name, 0, index + 1); // 初始化为0
+        memcpy(name, child, index); // 拷贝对应的字符
+
+        struct fext2_dir_entry *entry = find_entry(dir, name, &help_data);
+        if (entry == NULL) {
+            return 0;
+        }
+        struct fext2_inode *next_inode = read_inode(entry->ino);
+        free(entry); // 释放对应的目录项
+        return lookup_inode_by_name(next_inode, child + index + 1);
+    }
+
+    return 0;
+}
