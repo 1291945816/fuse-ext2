@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "bitmap.h"
 #include "debug.h"
@@ -26,68 +27,50 @@ int main()
 
 
     device_open("/home/psong/fuse-ext2/image/fext2");
+    // erase_disk();
     read_superblock();
     read_group_desc();
 
+    // 尝试创建一个A文件 B文件
+    // 首先分配一个inode号
+    // get_unused_inode(0);
+    // struct fext2_inode a;
 
-    // 查找 /A/B
-    // 先获取根目录的数据
-    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
-    char * path = "/ABC/"; // ABC/
-    uint32_t result = lookup_inode_by_name(root_dir,path+1);
-    DBG_PRINT("%d",result);
+    // a.i_uid = getuid();
+    // a.i_gid = getgid();
+    // a.i_atime = a.i_ctime = a.i_mtime = time(NULL);
+    // a.i_dtime = 0;
+    // a.i_block[0] = get_unused_block(0);
+    // a.i_blocks++;
+    // a.i_mode = 0755 |  __S_IFREG; // 文件模式
+    // a.i_link_count = 1;
+    // a.i_size = 0;
+    // block_bitmap_set(a.i_block[0], 1);
+    // uint32_t ino = get_unused_inode(0);
+    // inode_bitmap_set(ino, 1);
+    // struct fext2_dir_entry file_entry;
+    // strcpy(file_entry.file_name, "C");
+    // file_entry.name_len = strlen("C");
+    // file_entry.file_type = REG;  // 这是一个文件
+    // file_entry.ino = ino;
+    // file_entry.rec_len = sizeof(struct fext2_dir_entry);
 
+    // struct fext2_inode * roo_dir= read_inode(INODE_ROOT_INO);
 
+    // Bool ret = add_entry(INODE_ROOT_INO, roo_dir, &file_entry);
+    // DBG_PRINT("result is %d", ret);
+    // write_inode(&a,ino);
+    // write_inode(roo_dir, INODE_ROOT_INO); // 也要更新目录信息
+    // update_group_desc(); // 更新块组信息
 
-    // struct fext2_inode *root =  read_inode(2);
-    // DBG_PRINT("%d", fext2_groups_table[0].bg_free_inodes_count);
-    // uint8_t buffer[BLOCK_SIZE];
-    // read_block_bitmap(buffer, 0);
-    // print(buffer,BLOCK_SIZE);
+    // // // 查询新增的目录/ 文件
+    struct fext2_inode * root = read_inode(INODE_ROOT_INO);
+    // find_entry(root, "A", );
+    uint32_t ino = lookup_inode_by_name(root, "C");
+    // struct fext2_inode * A = read_inode(ino);
+    DBG_PRINT("%d", ino);
 
-
-
-
-
-
-    // Bool state = device_seek(1024);
-
-    // printf("%d\n",state);
-
-    // device_close();
-    
-    // printf("%lu", sizeof(struct fext2_inode));
-    // erase_disk();
-    // init_meta_info();
-    // read_superblock();
-    // device_close();
-    // read_group_desc();
-
-    // read_superblock();
-    // read_group_desc();
-
-
-    /*测试读取inode块*/
-    // 假设 ino 为 3
-
-    // struct fext2_inode inode;
-    // inode.i_size = 110;
-    // inode.i_blocks = 3;
-    // inode.i_atime = time(NULL);
-
-    // // 移动指针
-    // device_seek((fext2_groups_table[0].bg_inode_table*BLOCK_SIZE)
-    //                                     +2*sizeof(struct fext2_inode));
-    // // 写入指定位置
-    // device_write(&inode, sizeof(struct fext2_inode));
-
-    // inode_bitmap_set(3, 1);
-
-    // device_fflush();
-
-
-
-    // struct fext2_inode* inode_ = read_inode(3);
+    // free(root);
 
 
 
@@ -95,47 +78,6 @@ int main()
 
 
 
-    // uint8_t buffer[BLOCK_SIZE];
-
-    // read_inode_bitmap(buffer, 0);
-
-    /*获取空的块号*/
-    // uint32_t block_no = get_unused_block(0);
-    // 构建一个inode
-    // struct fext2_inode inode;
-    // uint32_t block_data[256];
-    // block_data[0]=block_no; //7
-    // print(buffer, BLOCK_SIZE);
-
-
-    // DBG_PRINT("%u", fext2_groups_table[0].bg_free_blocks_count);
-
-
-
-
-    // // 先刷 存储数据块的数据到数据区中 再刷中间块的内容到数据区中
-    // char name[BLOCK_SIZE]={"Hello world"};
-    // write_data_blcok(name, block_no); // 刷新到文件中
-    // block_bitmap_set(block_no, 1); // 状态置为1
-
-    // block_no = get_unused_block(0); 
-    // inode.i_block[7] = 2;
-    // write_data_blcok(block_data, block_no); // 刷新到文件中
-    // block_bitmap_set(block_no, 1); // 状态置为1
-    // update_group_desc(); // 更新组描述符
-
-
-    // 更新间接块
-    
-
-    // // 读取数据
-    // char name_[BLOCK_SIZE]={0};
-    
-
-
-    // read_inode_data_block(name_, 7, &inode);
-
-    // DBG_PRINT("result is: %s", name_);
 
 
 
@@ -148,39 +90,7 @@ int main()
 
 
 
-
-    // read_block_bitmap(buffer, 0);
-    // print(buffer,BLOCK_SIZE);
-
-
-
-
-
-
-
-    // block_data[0]=3;         // 表示数据块中的第三个块 
-
-    
-
-    // DBG_PRINT("%d",(16>>4)<<4);
-    
-    // free(fext2_groups_table);
 
     device_close();
-
-
-
-
-    
-
-    
-
-    
-    
-    
-
-
-
-
     return 0;
 }

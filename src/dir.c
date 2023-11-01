@@ -1,5 +1,7 @@
 
 
+#include "debug.h"
+#include "device.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
 #include "utils.h"
@@ -50,7 +52,9 @@ struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,
         }
 
         /*适当用goto*/
-        if (block_number >= dir->i_blocks)
+        if (((block_number < FEXT2_N_BLOCKS) && (block_number-1) >= dir->i_blocks) 
+            // 考虑中间块
+         )
             goto out_result;
 
          // 读取新的块（块内偏移不够存储一个目录项时 需要到下一个块获取）
@@ -178,10 +182,16 @@ struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_h
     ret_entry->rec_len = entry->rec_len;
     return ret_entry;
 }
-
+/**
+ * @brief 
+ * 根据name（首字符 不能以/开头，/结尾）
+ * @param dir 
+ * @param child 
+ * @return uint32_t 
+ */
 uint32_t lookup_inode_by_name(struct fext2_inode *dir, const char *child)
 {
-    
+
     int len = strlen(child);
     // / A/B/C  A B/C  B C C 分别拆解 /AB/
     // 获取目录前可以先移除了最后一个字符的/
@@ -214,4 +224,102 @@ uint32_t lookup_inode_by_name(struct fext2_inode *dir, const char *child)
     }
 
     return 0;
+}
+
+
+
+/**
+ * @brief 
+ * 根据提供的dir 添加子项
+ * @param dir 
+ * @param child_entry 
+ */
+Bool add_entry(uint32_t dir_ino,struct fext2_inode * dir,struct fext2_dir_entry * child_entry)
+{
+    // 初始页
+    if (dir->i_size == 0) 
+    {
+        char buffer[BLOCK_SIZE]={0};
+
+        // 拷贝指定大小的字节
+        // buffer 默认指向数组元素的开头
+        memcpy(buffer,child_entry, sizeof(struct fext2_dir_entry));
+        write_data_blcok(buffer, dir->i_block[0]);
+        dir->i_size += sizeof(struct fext2_dir_entry);
+    }
+    else // 找到最后一项 
+    {
+        uint32_t r_size = 0;
+        uint32_t block_offset = 0;
+        uint32_t block_number=0;
+        uint8_t buffer[BLOCK_SIZE]= {0};
+        
+        uint32_t entry_fixed_size =  sizeof(struct fext2_dir_entry);
+
+
+        read_inode_data_block(buffer, block_number++, dir);
+
+        // 考虑一种可能 就是 被删除的节点
+        struct fext2_dir_entry * entry = (struct fext2_dir_entry *)buffer;
+        r_size += sizeof(struct fext2_dir_entry);
+        
+        block_offset += entry->rec_len; 
+
+
+        while (r_size < dir->i_size) {
+            
+            // 先判断再找下一个 不满足条件就重新获取一个块
+            // 这里的判断是剩余的空间是否满足存放下一个目录项
+            if ((BLOCK_SIZE-block_offset) < sizeof(struct fext2_dir_entry)) {
+                memset(buffer, 0, BLOCK_SIZE);
+                read_inode_data_block(buffer, block_number++, dir);
+            
+                entry = (struct fext2_dir_entry *)buffer;
+                r_size += entry_fixed_size;
+                block_offset = entry->rec_len;            
+            }
+            else
+            {
+                entry = (struct fext2_dir_entry *)((void *)buffer + block_offset);
+                block_offset += entry->rec_len;
+                r_size += entry_fixed_size;
+            }
+        }
+    
+        // 再验证一遍是否满足条件
+        if ((BLOCK_SIZE - block_offset) < sizeof(struct fext2_dir_entry))
+        {
+            memset(buffer, 0, BLOCK_SIZE);
+
+            if (block_number == dir->i_blocks) // 说明需要申请一个块来存储数据 
+            {
+                uint32_t group_number = (dir_ino-1)/fext2_sb.s_inodes_per_group;
+                uint32_t block_no = get_unused_block(group_number);     // 获取信息的块号
+                if(!wirte_ino_for_inode(block_no,dir,dir_ino))          // 写入ino到dir的block中
+                    return FALSE;
+                block_bitmap_set(block_no, 1);
+                dir->i_blocks ++;
+
+            }
+            else 
+            {
+                DBG_PRINT("current exec this.");
+                read_inode_data_block(buffer, block_number, dir);
+                 
+            }
+            block_offset = 0; // 直接使用新的一个块的第一个
+            memcpy((void *)buffer + block_offset, child_entry, entry_fixed_size);
+            write_inode_data_block(buffer, block_number, dir);
+            dir->i_size += entry_fixed_size;
+        }
+        else
+        {
+            memcpy((void *)buffer + block_offset, child_entry, entry_fixed_size);
+            /*向块中写入数据*/
+            write_inode_data_block(buffer, block_number-1, dir);
+            dir->i_size += entry_fixed_size;
+        }
+    }
+
+    return TRUE;    
 }

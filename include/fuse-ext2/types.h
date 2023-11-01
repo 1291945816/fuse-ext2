@@ -10,6 +10,11 @@ typedef enum Bool
     FALSE = 0
 }Bool;
 
+typedef enum FileType{
+    REG =1,
+    DIR = 2
+}FileType;
+
 
 /*TODO: 可以作为fext2的一部分 */
 typedef struct fext2_entry_helper{
@@ -68,7 +73,7 @@ struct fext2_group_desc
 
 
 #define FEXT2_N_BLOCKS     8               // 数据块数目 包含7个直接索引+1个间接索引
-
+#define FEXT2_MAX_BLOCKS   262
 
 
 
