@@ -100,8 +100,14 @@ Bool add_entry(uint32_t dir_ino, struct fext2_inode * dir,struct fext2_dir_entry
 
 
 /*文件系统操作*/
-void*  fext2_init(struct fuse_conn_info *conn); /*文件系统的初始化*/
-void   fext2_destory(void * );/*清除文件系统挂载信息以及在内存驻留的信息*/
+void*  fext2_init(struct fuse_conn_info *conn);            
+void   fext2_destory(void * );  
+
+int    fext2_getattr(const char *, struct stat *);
+// TODO: 还未处理权限控制                            
+int    fext2_opendir(const char *, struct fuse_file_info *); 
+int    fext2_readdir(const char *, void *, fuse_fill_dir_t, off_t,struct fuse_file_info *);
+
 
 /**
  * @brief 

@@ -77,6 +77,10 @@ void inode_bitmap_set(uint32_t ino,uint8_t state)
  */
 Bool read_inode_data_block(void * block,uint32_t data_block_index, const struct fext2_inode  *  inode )
 {
+
+    if (data_block_index >= inode->i_blocks) {
+        return FALSE;
+    }
     
     if (data_block_index < FEXT2_N_BLOCKS-1) 
     {
@@ -90,9 +94,10 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const struct 
         read_data_block(tmp_block, inode->i_block[FEXT2_N_BLOCKS-1]);
         
         // 从指定偏移获取块号 随后读取存储的地址所指向的块号
-        read_data_block(block,tmp_block[offset]);
+        return read_data_block(block,tmp_block[offset]);
         // device_read_byte(tmp_block,sizeof(uint32_t),BLOCK_SIZE/sizeof(uint32_t));
     }
+    return FALSE;
 }
 
 /**
