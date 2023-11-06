@@ -4,6 +4,9 @@
 #include "utils.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
+#include <cstddef>
+#include <cstdint>
+#include <fuse/fuse.h>
 
 
 
@@ -20,6 +23,7 @@ void * fext2_init(struct fuse_conn_info *conn)
     DBG_PRINT("start initialize fext2 filesystem...\n");
     // 初始化超级块
     read_superblock();
+    fext2_sb.s_state = 1;
     // 初始化块表
     read_group_desc();
 
@@ -34,6 +38,7 @@ void * fext2_init(struct fuse_conn_info *conn)
  */
 void fext2_destory(void * data)
 {
+    fext2_sb.s_state = 0;
     // 同步数据
     update_superblock();
     update_group_desc();
@@ -43,6 +48,36 @@ void fext2_destory(void * data)
     free(fext2_groups_table);
     DBG_PRINT("filesystem exited\n");
 }
+
+/**
+ * @brief 
+ * 获取文件系统的统计信息
+ * @return int 
+ */
+int fext2_statfs(const char * path, struct statvfs * stat_vfs)
+{
+    uint32_t blk_free = 0,ino_free = 0;
+    for (size_t i = 0; i < NUM_GROUP; i++) 
+    {
+        blk_free += fext2_groups_table[i].bg_free_blocks_count;
+        ino_free += fext2_groups_table[i].bg_free_inodes_count;
+    
+    }
+    stat_vfs->f_bfree = blk_free;    // 空闲块数目
+    stat_vfs->f_bavail =blk_free;
+    stat_vfs->f_files = fext2_sb.s_inodes_count;  // 总共inode数目
+    stat_vfs->f_ffree =ino_free;   // 空闲inode数目
+    stat_vfs->f_favail =ino_free;
+    stat_vfs->f_fsid = fext2_sb.s_magic;
+    stat_vfs->f_bsize = BLOCK_SIZE;
+    stat_vfs->f_namemax = FEXT2_MAX_NAME_LEN;
+
+    DBG_PRINT("blk_free: %lu\t ino_free",stat_vfs->f_bavail, stat_vfs->f_favail)
+
+
+
+}
+
 
 /**
  * @brief 
@@ -88,9 +123,7 @@ int fext2_getattr(const char * path, struct stat * stabuf)
             return -ENOENT;
         }
 
-
         struct fext2_inode * cur_inode = read_inode(ino);
-
         stabuf->st_atime = cur_inode->i_atime;
         stabuf->st_size = real_block(cur_inode->i_blocks) * BLOCK_SIZE;
         stabuf->st_ctime = cur_inode->i_ctime;
@@ -101,7 +134,6 @@ int fext2_getattr(const char * path, struct stat * stabuf)
         stabuf->st_blksize = BLOCK_SIZE;
         stabuf->st_blocks = real_block(cur_inode->i_blocks);
         stabuf->st_nlink = cur_inode->i_link_count;
-
         free(cur_inode);
 
     }
@@ -244,5 +276,21 @@ int fext2_readdir(const char * path, void * buff,
     free(dir_inode);
 
     return 0;
-    
+}
+
+
+/**
+ * @brief 
+ * 创建一个目录
+ * @return int 
+ */
+int fext2_mkdir(const char * path, mode_t mode)
+{
+    struct fuse_context *fcxt=fuse_get_context();
+
+
+
+
+
+
 }
