@@ -7,6 +7,7 @@
 static struct fuse_operations fext2_oper = {
     .init    = fext2_init, // 初始化
     .destroy = fext2_destory,
+    .statfs  = fext2_statfs,
     .getattr = fext2_getattr,
     .opendir = fext2_opendir,
     .readdir = fext2_readdir,

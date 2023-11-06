@@ -4,9 +4,6 @@
 #include "utils.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
-#include <cstddef>
-#include <cstdint>
-#include <fuse/fuse.h>
 
 
 
@@ -65,6 +62,8 @@ int fext2_statfs(const char * path, struct statvfs * stat_vfs)
     }
     stat_vfs->f_bfree = blk_free;    // 空闲块数目
     stat_vfs->f_bavail =blk_free;
+    stat_vfs->f_frsize = 0;
+    stat_vfs->f_blocks = fext2_sb.s_blocks_count;  
     stat_vfs->f_files = fext2_sb.s_inodes_count;  // 总共inode数目
     stat_vfs->f_ffree =ino_free;   // 空闲inode数目
     stat_vfs->f_favail =ino_free;
@@ -72,10 +71,9 @@ int fext2_statfs(const char * path, struct statvfs * stat_vfs)
     stat_vfs->f_bsize = BLOCK_SIZE;
     stat_vfs->f_namemax = FEXT2_MAX_NAME_LEN;
 
-    DBG_PRINT("blk_free: %lu\t ino_free",stat_vfs->f_bavail, stat_vfs->f_favail)
-
-
-
+    DBG_PRINT("blk_free: %lu\t total_block: %lu",stat_vfs->f_bfree, DISK_SIZE);
+    
+    return 0;
 }
 
 
