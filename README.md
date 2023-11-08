@@ -34,4 +34,6 @@ dd if=/dev/zero of=fext2 bs=1024 count=1048576
 ```shell
 mkdir test 
 ./fuse-ext2 test --mount_image fext2
+# 如果想在挂载后能够被其他用户所访问，可以通过增加 allow_user ,同时需要配置 /etc/fuse.conf 里面的内容 （去掉user_allow_other的注释）
+./fuse-ext2  -o allow_other test --mount_image fext2 
 ```

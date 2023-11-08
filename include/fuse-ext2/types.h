@@ -4,6 +4,11 @@
 #define INCLUDE_FUSE_EXT2_TYPES_H
 #include "common.h"
 
+#define R_ONLY 4
+#define W_ONLY 2
+#define X_ONLY 1
+
+
 typedef enum Bool
 {
     TRUE = 1,

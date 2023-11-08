@@ -14,7 +14,7 @@
 
 
 Bool read_data_block(void * block,uint32_t block_number);
-
 Bool write_data_blcok(void * block,uint32_t block_number);
-
 int find_char(const char * src,char c);
+
+Bool check_parent_obj_(const char * path, int mask);
