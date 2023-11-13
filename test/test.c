@@ -25,9 +25,29 @@
 int main()
 {
 
+    // const char * path = "/Ate/Abc";
+    // const uint32_t len = strlen(path);
+
+    // char * parent_path = (char*)malloc(sizeof(char)* len+1);
+    // memset(parent_path, '\0', len+1);
+    // char dir_name[FEXT2_MAX_NAME_LEN]={0};
+
+    // int ret = parse_cur_dir(path, parent_path, dir_name);
+
+    // printf("%s\n",parent_path);
+    // printf("%s\n",dir_name);
+
+
+
+
+
+
+
+
+
 
     device_open("/home/psong/fuse-ext2/image/fext2");
-    // erase_disk();
+    erase_disk();
     read_superblock();
     read_group_desc();
 
@@ -64,13 +84,15 @@ int main()
     // update_group_desc(); // 更新块组信息
 
     // // // 查询新增的目录/ 文件
-    struct fext2_inode * root = read_inode(INODE_ROOT_INO);
-    // find_entry(root, "A", );
-    uint32_t ino = lookup_inode_by_name(root, "C");
-    // struct fext2_inode * A = read_inode(ino);
-    DBG_PRINT("%d", ino);
+    // struct fext2_inode * root = read_inode(INODE_ROOT_INO);
+    // // find_entry(root, "A", );
+    // uint32_t ino = lookup_inode_by_name(root, "abc");
+    // // struct fext2_inode * A = read_inode(ino);
+    // DBG_PRINT("%d", ino);
 
     // free(root);
+
+    // free(parent_path);
 
 
 

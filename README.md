@@ -1,6 +1,10 @@
 # fuse-ext2
 这是一个简化版的ext2文件系统，支持用户态环境下的挂载。
 
+### 环境要求
+1. C11标准
+
+
 ### 如何去构建项目？
 ```shell
 git clone git@github.com:1291945816/fuse-ext2.git

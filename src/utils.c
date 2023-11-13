@@ -2,8 +2,7 @@
 #include "device.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
-#include <stddef.h>
-#include <string.h>
+
 /**
  * @brief 
  * 根据块号从数据块区域中读取块的内容
@@ -48,4 +47,37 @@ int  find_char(const char * src,char c)
     return -1; // 没找到 -1
 
 
+}
+
+/**
+ * @brief 
+ * 对一个路径进行解析 找出父目录以及当前目录
+ * @param path 
+ * @param parent_dir 出参 不能为空
+ * @param cur_dir 出参  不能为空
+ */
+int parse_cur_dir(const char * path,char * parent_dir,char * cur_dir)
+{
+    uint32_t len = strlen(path);
+    uint32_t raw_len = len;
+    if (path == NULL ||!len )
+        return -1;
+
+    
+    while (--len)
+        if (path[len] == '/')
+            break;
+    if (!len)
+    {
+        if (path[len]== '/')
+            strncpy(cur_dir, path+1, strlen(path));
+        else
+            strncpy(cur_dir, path, strlen(path)+1);
+        return 0;
+    }
+
+    // len 已经指向最后第一个/了 /A/B/CC len = 4 raw_len = 7
+    strncpy(cur_dir, path + len+1, raw_len - len-1);
+    strncpy(parent_dir, path, len);
+    return 0;
 }

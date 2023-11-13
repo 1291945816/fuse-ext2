@@ -3,7 +3,7 @@
 #include "device.h"
 #include "fuse-ext2/fext2.h"
 
-
+/*注册函数*/
 static struct fuse_operations fext2_oper = {
     .init    = fext2_init, // 初始化
     .destroy = fext2_destory,
@@ -11,6 +11,7 @@ static struct fuse_operations fext2_oper = {
     .getattr = fext2_getattr,
     .opendir = fext2_opendir,
     .readdir = fext2_readdir,
+    .mkdir   = fext2_mkdir
     
 };
 

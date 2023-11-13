@@ -10,6 +10,7 @@
 
 
 
+
 /**
  * @brief 文件系统的初始化
  * @param conn 
@@ -93,10 +94,11 @@ int fext2_getattr(const char * path, struct stat * stabuf)
         DBG_PRINT("No root dir!");
         return -ENOENT;
     }
-
+    
 
     if (len ==  1 && path[0] == '/') 
     {
+        stabuf->st_ino = INODE_ROOT_INO; // stabuf->st_ino： The 'st_ino' field is ignored except if the 'use_ino' mount option is given
         stabuf->st_atime = root_inode->i_atime;
         stabuf->st_size = real_block(root_inode->i_blocks) * BLOCK_SIZE;
         stabuf->st_ctime = root_inode->i_ctime;
@@ -122,6 +124,7 @@ int fext2_getattr(const char * path, struct stat * stabuf)
         }
 
         struct fext2_inode * cur_inode = read_inode(ino);
+        stabuf->st_ino = ino;
         stabuf->st_atime = cur_inode->i_atime;
         stabuf->st_size = real_block(cur_inode->i_blocks) * BLOCK_SIZE;
         stabuf->st_ctime = cur_inode->i_ctime;
@@ -229,7 +232,7 @@ int fext2_readdir(const char * path, void * buff,
     // 获取打开的目录的信息
     uint32_t ino = (uint32_t)file_info->fh;
     struct fext2_inode *dir_inode= read_inode(ino);
-
+    DBG_PRINT("current_path is %s", path);
     DBG_PRINT("dir size is %.2lf", (dir_inode->i_size/(1024*1.0)));
 
     filler(buff,".",NULL,0); // 当前目录
@@ -252,6 +255,8 @@ int fext2_readdir(const char * path, void * buff,
         }
         if (entry->ino == 0)  // 读取到了空数据
             break;
+
+        DBG_PRINT("%d", entry->ino);
 
 
     
@@ -278,17 +283,104 @@ int fext2_readdir(const char * path, void * buff,
 
 
 /**
- * @brief 
+ * @brief
  * 创建一个目录
  * @return int 
  */
 int fext2_mkdir(const char * path, mode_t mode)
 {
     struct fuse_context *fcxt=fuse_get_context();
+    uint32_t group_number = 0;
+    uint32_t ino = 0;
+    uint32_t parent_ino = 0;
+    uint32_t blk_ino = 0;
+    struct fext2_inode *parent_dir = NULL;
+    const uint32_t len=strlen(path);
 
+    // 解析父目录 & 当前目录
+    char * parent_path = (char*)malloc(sizeof(char)* len+1); // 记得释放空间
+    memset(parent_path, '\0', len+1);
+    char dir_name[FEXT2_MAX_NAME_LEN]={0};
 
+    parse_cur_dir(path, parent_path, dir_name);
 
+    // 获取目录
+    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
+    // 根路径后接的
+    if (!strlen(parent_path) && strlen(dir_name)) 
+    {
+        DBG_PRINT("parent dir is %s \t current dir is %s", "/", dir_name); 
+        parent_ino = INODE_ROOT_INO;   
+        parent_dir = root_dir;
+    }
+    else
+    {
+        free(root_dir);
+        DBG_PRINT("parent dir is %s \t current dir is %s", parent_path, dir_name);
+        parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
+        if (!parent_ino)
+            return -ENOENT;
+        parent_dir = read_inode(parent_ino);
+    }
+    
+    // 这里有个技巧 尽量和父目录在同一个块组里面
+    group_number = GET_GROUP_N(parent_ino);
 
+    DBG_PRINT("group_number: %u", group_number);
+    while ((ino=get_unused_inode(group_number)) == 0)
+    {
+        if (group_number >= NUM_GROUP)
+            break;
+        ++group_number;
+    }
+    DBG_PRINT("new ino: %u", ino);
+    if (!ino) 
+    {
+        DBG_PRINT("[inode]DISK have not free inode!");
+        return -1;
+    }
 
+    DBG_PRINT("mode is %u", mode);
+    group_number = 0;                                       /*从0开始递增*/
+    while ((blk_ino=get_unused_block(group_number)) == 0)
+    {
+        if (group_number >= NUM_GROUP)
+            break;
+        ++group_number;
+    }
+    if (!blk_ino) 
+    {
+        DBG_PRINT("[data]DISK have not free data block!");
+        return -1;
+    }
 
+    struct fext2_inode new_inode;
+    new_inode.i_uid = fcxt->uid;
+    new_inode.i_gid = fcxt->gid;
+    new_inode.i_atime = new_inode.i_ctime = new_inode.i_mtime = time(NULL);
+    new_inode.i_dtime = 0;
+    new_inode.i_block[0] = blk_ino;
+    new_inode.i_blocks++;
+    new_inode.i_mode = mode|__S_IFDIR; // 文件模式
+    new_inode.i_link_count = 1;
+    new_inode.i_size = 0;
+
+    struct fext2_dir_entry new_entry;
+    strncpy(new_entry.file_name, dir_name, strlen(dir_name));
+    new_entry.file_type = DIR;
+    new_entry.name_len = strlen(dir_name);
+    new_entry.ino = ino;
+    new_entry.rec_len = sizeof(new_entry);
+
+    inode_bitmap_set(ino, 1);
+    block_bitmap_set(blk_ino, 1);
+
+    // 同步磁盘 信息更新
+    add_entry(parent_ino, parent_dir, &new_entry); // 添加目录项
+    write_inode(&new_inode, ino);
+    write_inode(parent_dir, parent_ino);
+    update_group_desc();
+    free(parent_dir);
+
+    return 0;
 }

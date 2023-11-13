@@ -184,7 +184,7 @@ struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_h
 }
 /**
  * @brief 
- * 根据name（首字符 不能以/开头，/结尾）
+ * 根据name（首字符 不能以 /开头，/结尾）
  * @param dir 
  * @param child 
  * @return uint32_t 
@@ -192,7 +192,6 @@ struct fext2_dir_entry * next_entry(struct fext2_inode * dir,const fext2_entry_h
 uint32_t lookup_inode_by_name(struct fext2_inode *dir, const char *child)
 {
 
-    int len = strlen(child);
     // / A/B/C  A B/C  B C C 分别拆解 /AB/
     // 获取目录前可以先移除了最后一个字符的/
     int index = find_char(child, '/');
