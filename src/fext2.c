@@ -129,9 +129,9 @@ int fext2_getattr(const char * path, struct stat * stabuf)
         stabuf->st_size = real_block(cur_inode->i_blocks) * BLOCK_SIZE;
         stabuf->st_ctime = cur_inode->i_ctime;
         stabuf->st_gid = cur_inode->i_gid;
-        stabuf->st_uid = cur_inode->i_uid;
+        stabuf->st_uid = cur_inode->i_uid; 
         stabuf->st_mode =cur_inode->i_mode;
-        stabuf->st_mtime = root_inode->i_mtime;
+        stabuf->st_mtime = cur_inode->i_mtime;
         stabuf->st_blksize = BLOCK_SIZE;
         stabuf->st_blocks = real_block(cur_inode->i_blocks);
         stabuf->st_nlink = cur_inode->i_link_count;
@@ -247,7 +247,7 @@ int fext2_readdir(const char * path, void * buff,
 
         if ((BLOCK_SIZE - blk_size) < sizeof(struct fext2_dir_entry)) 
         {
-
+            DBG_PRINT("ttttt");
             memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE); 
             read_inode_data_block(block,curr_blk++,dir_inode);
             entry= (struct fext2_dir_entry *)block;
@@ -326,7 +326,6 @@ int fext2_mkdir(const char * path, mode_t mode)
     // 这里有个技巧 尽量和父目录在同一个块组里面
     group_number = GET_GROUP_N(parent_ino);
 
-    DBG_PRINT("group_number: %u", group_number);
     while ((ino=get_unused_inode(group_number)) == 0)
     {
         if (group_number >= NUM_GROUP)
@@ -360,8 +359,8 @@ int fext2_mkdir(const char * path, mode_t mode)
     new_inode.i_atime = new_inode.i_ctime = new_inode.i_mtime = time(NULL);
     new_inode.i_dtime = 0;
     new_inode.i_block[0] = blk_ino;
-    new_inode.i_blocks++;
-    new_inode.i_mode = mode|__S_IFDIR; // 文件模式
+    new_inode.i_blocks=1;
+    new_inode.i_mode = mode|__S_IFDIR; // 模式
     new_inode.i_link_count = 1;
     new_inode.i_size = 0;
 

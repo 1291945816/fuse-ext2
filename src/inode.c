@@ -111,7 +111,7 @@ struct fext2_inode *  read_inode(uint32_t ino)
 
 
     // 
-    uint32_t group_number = (ino-1)/fext2_sb.s_inodes_per_group;
+    uint32_t group_number = (ino-1)/ fext2_sb.s_inodes_per_group;
     if (group_number >= NUM_GROUP) 
         return NULL;
     /*偏移 代表第几个inode*/
@@ -145,10 +145,10 @@ struct fext2_inode *  read_inode(uint32_t ino)
 uint32_t write_inode(const struct fext2_inode * inode,uint32_t ino)
 {
     
-    uint32_t group_number = (ino-1)/fext2_sb.s_inodes_count;
+    uint32_t group_number = (ino-1)/fext2_sb.s_inodes_per_group;
     if (group_number >= NUM_GROUP) 
         return 0;
-    uint32_t offset =(ino-1)%fext2_sb.s_inodes_count;
+    uint32_t offset =(ino-1)%fext2_sb.s_inodes_per_group;
 
     uint32_t base = fext2_groups_table[group_number].bg_inode_table;
 
