@@ -158,20 +158,26 @@ uint32_t write_inode(const struct fext2_inode * inode,uint32_t ino)
     device_seek((base+block_num)*BLOCK_SIZE + (block_offset * sizeof(struct fext2_inode)));
     device_write((void *)inode, sizeof(struct fext2_inode));
     device_fflush();
+    return ino;
 }
 
 /**
  * @brief 
  * 向当前的inode结构新增数据块号
- 如果第7块数据块无法存储数据 则会申请一个块
+    如果第7块数据块无法存储数据 则会申请一个块
+    同时第7块指向 间接块中的0块
  * @param ino 
  * @param inode 
  * @return Bool 
  */
 Bool wirte_ino_for_inode(uint32_t block_no, struct fext2_inode * inode,uint32_t ino)
 {
-    if (inode->i_blocks == FEXT2_MAX_BLOCKS)
+    if (inode->i_blocks >= FEXT2_MAX_BLOCKS)
+    {
+        DBG_PRINT("have not able to add new inode,> max");
         return FALSE;
+    }
+
 
     if (inode->i_blocks < (FEXT2_N_BLOCKS-1)) 
     {
@@ -181,18 +187,19 @@ Bool wirte_ino_for_inode(uint32_t block_no, struct fext2_inode * inode,uint32_t 
     {
         uint32_t group_number = (ino-1)/fext2_sb.s_inodes_per_group;
         uint32_t blockno_in = get_unused_block(group_number);
+        if (!blockno_in)
+            return FALSE;
         block_bitmap_set(blockno_in, 1);
         inode->i_block[FEXT2_N_BLOCKS-1] = blockno_in;
         uint32_t new_block[BLOCK_SIZE/sizeof(uint32_t)]={0};
         new_block[0] = block_no;
         write_data_blcok(new_block,blockno_in); // 同步数据到磁盘中
-        // inode->i_blocks ++; //先不增加具体的块数目 后续统计大小的再判断即可 借助real_block宏
     }
     else // 大于就先读取一个块
     {
         uint32_t block_buffer[BLOCK_SIZE/sizeof(uint32_t)]={0};
         read_data_block(block_buffer, inode->i_block[FEXT2_N_BLOCKS-1]);
-        block_buffer[inode->i_blocks-FEXT2_N_BLOCKS] = block_no;
+        block_buffer[inode->i_blocks-FEXT2_N_BLOCKS+1] = block_no;
         write_data_blcok(block_buffer,inode->i_block[FEXT2_N_BLOCKS-1]); // 同步数据到磁盘中
     } 
     return TRUE;
@@ -200,7 +207,8 @@ Bool wirte_ino_for_inode(uint32_t block_no, struct fext2_inode * inode,uint32_t 
 
 Bool write_inode_data_block(void * block,uint32_t data_block_index, const  struct fext2_inode * inode)
 {
-    
+    if (data_block_index >= inode->i_blocks) 
+        return FALSE;
 
     if (data_block_index < FEXT2_N_BLOCKS-1) 
     {
@@ -211,10 +219,8 @@ Bool write_inode_data_block(void * block,uint32_t data_block_index, const  struc
 
         uint32_t tmp_block[BLOCK_SIZE/sizeof(uint32_t)];
         uint32_t offset = data_block_index - FEXT2_N_BLOCKS + 1;
-
         read_data_block(tmp_block, inode->i_block[FEXT2_N_BLOCKS-1]);
-        
-        // 
         write_data_blcok(block,tmp_block[offset]);
     }
+    return TRUE;
 }

@@ -5,9 +5,8 @@
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
 #include "utils.h"
-#include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
+
 
 /**
  * @brief 
@@ -27,16 +26,15 @@ struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,
 
 
     // TODO: 可改为do...while结构
-    // 根据buffer offset 
     struct fext2_dir_entry * entry = (struct fext2_dir_entry *)buffer;
     uint16_t a_size = entry->rec_len; // 实际长度
-    uint16_t block_offset = 0; // 块内偏移
+    uint16_t block_offset = a_size; // 块内偏移长度 也即下一个file_entry的节点
     
     /*根据目录大小来判断迭代次数[可能没有什么作用！]*/
     while(a_size <= dir->i_size ) {
         
-        /*找到*/
-        if (strcmp(entry->file_name, name) == 0)
+        /*找到 采用memcpy算法更优于strcpy  因为已经确保知道其长度*/
+        if ((entry->name_len == strlen(name)) && memcmp(entry->file_name, name,strlen(name)) == 0)
         {
             struct fext2_dir_entry * ret_entry = (struct fext2_dir_entry * )malloc(sizeof(struct fext2_dir_entry));
             ret_entry->ino = entry->ino;
@@ -60,11 +58,10 @@ struct fext2_dir_entry * find_entry(struct fext2_inode * dir, const char * name,
          // 读取新的块（块内偏移不够存储一个目录项时 需要到下一个块获取）
          // TODO: 值得优化[261是 6+256 -1 文件块]
         if ((BLOCK_SIZE - block_offset) < sizeof(struct fext2_dir_entry)) {
-            
             memset(buffer, 0, sizeof(uint8_t)*BLOCK_SIZE); // 置0
             read_inode_data_block(buffer, block_number++, dir);
             entry = (struct fext2_dir_entry *)buffer;
-            block_offset = 0;
+            block_offset = entry->rec_len;
             a_size += entry->rec_len;
             
         }else {
@@ -200,6 +197,7 @@ uint32_t lookup_inode_by_name(struct fext2_inode *dir, const char *child)
 
         struct fext2_dir_entry *entry = find_entry(dir, child, &help_data);
         if (entry == NULL) {
+            DBG_PRINT("ERROR:  child: %s", child);
             return 0;
         }
         // struct fext2_inode* next_inode =read_inode(entry->ino);
@@ -258,15 +256,15 @@ Bool add_entry(uint32_t dir_ino,struct fext2_inode * dir,struct fext2_dir_entry 
 
         read_inode_data_block(buffer, block_number++, dir);
 
-        // 考虑一种可能 就是 被删除的节点
+
         struct fext2_dir_entry * entry = (struct fext2_dir_entry *)buffer;
         r_size += sizeof(struct fext2_dir_entry);
         
-        block_offset += entry->rec_len; 
+        block_offset += entry->rec_len;  
 
 
-        while (r_size < dir->i_size) {
-            
+        while ((r_size < dir->i_size) && entry->ino != 0) {
+
             // 先判断再找下一个 不满足条件就重新获取一个块
             // 这里的判断是剩余的空间是否满足存放下一个目录项
             if ((BLOCK_SIZE-block_offset) < sizeof(struct fext2_dir_entry)) {
@@ -284,19 +282,27 @@ Bool add_entry(uint32_t dir_ino,struct fext2_inode * dir,struct fext2_dir_entry 
                 r_size += entry_fixed_size;
             }
         }
-    
+
+
+        DBG_PRINT("block_num %d i_blocks %d",block_number,dir->i_blocks);
         // 再验证一遍是否满足条件
         if ((BLOCK_SIZE - block_offset) < sizeof(struct fext2_dir_entry))
         {
+            
             memset(buffer, 0, BLOCK_SIZE);
 
             if (block_number == dir->i_blocks) // 说明需要申请一个块来存储数据 
             {
+                
                 uint32_t group_number = (dir_ino-1)/fext2_sb.s_inodes_per_group;
                 uint32_t block_no = get_unused_block(group_number);     // 获取信息的块号
+                block_bitmap_set(block_no, 1); /*避免下面获取中间块的时候得到同一个*/
+                DBG_PRINT("new block: %d",block_no);
                 if(!wirte_ino_for_inode(block_no,dir,dir_ino))          // 写入ino到dir的block中
+                {
+                    block_bitmap_set(block_no, 0);
                     return FALSE;
-                block_bitmap_set(block_no, 1);
+                }
                 dir->i_blocks ++;
 
             }
@@ -306,16 +312,22 @@ Bool add_entry(uint32_t dir_ino,struct fext2_inode * dir,struct fext2_dir_entry 
                 read_inode_data_block(buffer, block_number, dir);
                  
             }
-            block_offset = 0; // 直接使用新的一个块的第一个
-            memcpy((void *)buffer + block_offset, child_entry, entry_fixed_size);
+            memcpy((void *)buffer, child_entry, entry_fixed_size);
             write_inode_data_block(buffer, block_number, dir);
             dir->i_size += entry_fixed_size;
         }
         else
         {
+            DBG_PRINT("blk_num %d  total %d",block_number-1,dir->i_blocks);
             memcpy((void *)buffer + block_offset, child_entry, entry_fixed_size);
             /*向块中写入数据*/
-            write_inode_data_block(buffer, block_number-1, dir);
+            Bool ret = write_inode_data_block(buffer, block_number-1, dir);
+            if (ret == FALSE) 
+            {
+                DBG_PRINT("failure write");
+                return ret;
+            }
+               
             dir->i_size += entry_fixed_size;
         }
     }

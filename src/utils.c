@@ -24,6 +24,7 @@ Bool write_data_blcok(void * block,uint32_t block_number)
     device_seek((DATA_BLOCK_BASE_PER_GROUP+block_number-1)*BLOCK_SIZE);
     device_write(block, BLOCK_SIZE);
     device_fflush();
+    return TRUE;
 }
 
 

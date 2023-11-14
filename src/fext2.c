@@ -11,6 +11,7 @@
 
 
 
+
 /**
  * @brief 文件系统的初始化
  * @param conn 
@@ -119,6 +120,7 @@ int fext2_getattr(const char * path, struct stat * stabuf)
         child_path[len-1] = '\0'; // 加结尾符
         uint32_t ino=lookup_inode_by_name(root_inode,child_path);
         if (ino == 0) {
+            DBG_PRINT("ERROR");
             free(root_inode);
             return -ENOENT;
         }
@@ -244,10 +246,11 @@ int fext2_readdir(const char * path, void * buff,
 
     while (curr_size < dir_inode->i_size)
     {
+        DBG_PRINT("curr_size %d  dir_inode->i_size %d",curr_size,dir_inode->i_size);
 
         if ((BLOCK_SIZE - blk_size) < sizeof(struct fext2_dir_entry)) 
         {
-            DBG_PRINT("ttttt");
+            DBG_PRINT("%d",curr_blk);
             memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE); 
             read_inode_data_block(block,curr_blk++,dir_inode);
             entry= (struct fext2_dir_entry *)block;
@@ -260,18 +263,17 @@ int fext2_readdir(const char * path, void * buff,
 
 
     
-        char name[FEXT2_MAX_NAME_LEN+1];
+        char name[FEXT2_MAX_NAME_LEN+1]={0};
         memcpy(name, entry->file_name, entry->name_len);
         name[entry->name_len] = '\0';
 
-        
         curr_size += entry->rec_len;
         blk_size  += entry->rec_len;
         
 
         filler(buff,name,NULL,0); // 填充数据
 
-        DBG_PRINT("reading：%s ,total %d Byte", entry->file_name,entry->rec_len);
+        DBG_PRINT("reading: %s,total %d Byte", name,entry->rec_len);
 
         entry = (struct fext2_dir_entry *)((void *)entry + entry->rec_len); // 移到下一项
         
@@ -365,7 +367,8 @@ int fext2_mkdir(const char * path, mode_t mode)
     new_inode.i_size = 0;
 
     struct fext2_dir_entry new_entry;
-    strncpy(new_entry.file_name, dir_name, strlen(dir_name));
+    strncpy(new_entry.file_name, dir_name, strlen(dir_name)+1); /*加一个后缀0*/
+    new_entry.file_name[strlen(dir_name)]='\0';
     new_entry.file_type = DIR;
     new_entry.name_len = strlen(dir_name);
     new_entry.ino = ino;
@@ -375,7 +378,15 @@ int fext2_mkdir(const char * path, mode_t mode)
     block_bitmap_set(blk_ino, 1);
 
     // 同步磁盘 信息更新
-    add_entry(parent_ino, parent_dir, &new_entry); // 添加目录项
+    Bool ret = add_entry(parent_ino, parent_dir, &new_entry); // 添加目录项
+    if (ret == FALSE)
+    {
+        inode_bitmap_set(ino, 0);
+        block_bitmap_set(blk_ino, 0);
+        DBG_PRINT("have not add entry for dir");
+        return -EPERM;
+    }
+        
     write_inode(&new_inode, ino);
     write_inode(parent_dir, parent_ino);
     update_group_desc();
