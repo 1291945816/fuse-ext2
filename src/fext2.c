@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
+#include <stdlib.h>
 
 
 
@@ -348,7 +349,12 @@ int fext2_mkdir(const char * path, mode_t mode)
         DBG_PRINT("parent dir is %s \t current dir is %s", parent_path, dir_name);
         parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
         if (!parent_ino)
+        {
+            free(parent_path);
             return -ENOENT;
+
+        }
+            
         parent_dir = read_inode(parent_ino);
     }
     
@@ -365,6 +371,7 @@ int fext2_mkdir(const char * path, mode_t mode)
     if (!ino) 
     {
         DBG_PRINT("[inode]DISK have not free inode!");
+        free(parent_path);
         return -1;
     }
 
@@ -379,6 +386,7 @@ int fext2_mkdir(const char * path, mode_t mode)
     if (!blk_ino) 
     {
         DBG_PRINT("[data]DISK have not free data block!");
+        free(parent_path);
         return -1;
     }
 
@@ -412,6 +420,7 @@ int fext2_mkdir(const char * path, mode_t mode)
         block_bitmap_set(blk_ino, 0);
         DBG_PRINT("have not add entry for dir");
         free(parent_dir);
+        free(parent_path);
         return -EPERM;
     }
         
@@ -419,6 +428,7 @@ int fext2_mkdir(const char * path, mode_t mode)
     write_inode(parent_dir, parent_ino);
     update_group_desc();
     free(parent_dir);
+    free(parent_path);
 
     return 0;
 }
@@ -459,7 +469,11 @@ int fext2_rmdir(const char * path)
         DBG_PRINT("parent dir: %s \t current dir: %s", parent_path, dir_name);
         parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
         if (!parent_ino)
+        {
+            free(parent_path);
             return -ENOENT;
+        }
+            
         parent_dir = read_inode(parent_ino);
     }
 
@@ -468,12 +482,15 @@ int fext2_rmdir(const char * path)
 
     if (ret==FALSE) {
         DBG_PRINT("Sorry,have not remove %s",dir_name);
+        free(parent_path);
         return -1;
     }
     // 更新目录节点信息
     DBG_PRINT("update inode");
     write_inode(parent_dir, parent_ino); 
     update_group_desc();
+    free(parent_path);
+    free(root_dir);
     return 0;
 
 }
