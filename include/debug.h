@@ -10,7 +10,7 @@
 
 #define DBG_PRINT(fmt, args...)    \
         do{ \
-            printf("[%s %s] %s:%.4d  => "fmt"\n\r",__DATE__,__TIME__,__FILE__,__LINE__,##args); \
+            printf(" [DEBUG] [%s %s]  %s:%.4d => " fmt"\n\r",__DATE__,__TIME__,__FILE__,__LINE__,##args); \
         }while (0)
 #else
 #define  DBG_PRINT(fmt, args...)

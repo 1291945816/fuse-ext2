@@ -1,7 +1,7 @@
 aux_source_directory(.  SRC)
 
 # 启用调试的宏
-add_definitions(-DFEXT2_DEBUG -D_FILE_OFFSET_BITS=64  -Wall )
+add_definitions(-DFEXT2_DEBUG -D_FILE_OFFSET_BITS=64  -Wall -g )
 # add_definitions( -D_FILE_OFFSET_BITS=64  -Wall )
 add_executable(${PROJECT_NAME} ${SRC})
 

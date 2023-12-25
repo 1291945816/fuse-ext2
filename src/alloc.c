@@ -24,6 +24,7 @@ void read_block_bitmap(void * buffer, uint32_t group_number)
 {
     if (group_number >= NUM_GROUP)
     {
+        DBG_PRINT("%d", group_number);
         fprintf(stderr,"offer group number > total!\n");
         return;
     }
@@ -62,7 +63,6 @@ void block_bitmap_set(uint32_t block_index,uint8_t state)
     uint8_t buffer[BLOCK_SIZE]={0};
     uint32_t group_number = (block_index-1) / fext2_sb.s_blocks_per_group;
     uint32_t index = (block_index-1) % fext2_sb.s_blocks_per_group;
-
     read_block_bitmap(buffer, group_number);
 
     if (state) {

@@ -4,7 +4,7 @@
 
 #include "fuse-ext2/fext2.h"
 #include "device.h"
-#include"bitmap.h"
+#include "bitmap.h"
 #include "fuse-ext2/types.h"
 #include "utils.h"
 #include "debug.h"
@@ -77,10 +77,6 @@ void inode_bitmap_set(uint32_t ino,uint8_t state)
  */
 Bool read_inode_data_block(void * block,uint32_t data_block_index, const struct fext2_inode  *  inode )
 {
-
-    if (data_block_index >= inode->i_blocks) {
-        return FALSE;
-    }
     
     if (data_block_index < FEXT2_N_BLOCKS-1) 
     {
@@ -90,14 +86,17 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const struct 
 
         uint32_t tmp_block[BLOCK_SIZE/sizeof(uint32_t)];
         uint32_t offset = data_block_index - FEXT2_N_BLOCKS + 1;
+        if (offset >= (BLOCK_SIZE/sizeof(uint32_t)))
+        {
+            DBG_PRINT("This offset more than limit");
+            return FALSE;
+        }
 
         read_data_block(tmp_block, inode->i_block[FEXT2_N_BLOCKS-1]);
         
         // 从指定偏移获取块号 随后读取存储的地址所指向的块号
         return read_data_block(block,tmp_block[offset]);
-        // device_read_byte(tmp_block,sizeof(uint32_t),BLOCK_SIZE/sizeof(uint32_t));
     }
-    return FALSE;
 }
 
 /**
@@ -166,49 +165,73 @@ uint32_t write_inode(const struct fext2_inode * inode,uint32_t ino)
  * 向当前的inode结构新增数据块号
     如果第7块数据块无法存储数据 则会申请一个块
     同时第7块指向 间接块中的0块
+    采用遍历的方式检索结构的哪些部分为0
+    优先前面的0会被处理 后才会处理
  * @param ino 
  * @param inode 
- * @return Bool 
+ * @return 块内索引 
  */
-Bool wirte_ino_for_inode(uint32_t block_no, struct fext2_inode * inode,uint32_t ino)
+int32_t wirte_ino_for_inode(uint32_t block_no, struct fext2_inode * inode,uint32_t ino)
 {
-    if (inode->i_blocks >= FEXT2_MAX_BLOCKS)
+    if (inode->i_blocks == FEXT2_MAX_BLOCKS)
     {
-        DBG_PRINT("have not able to add new inode,> max");
-        return FALSE;
+        DBG_PRINT("have not able to add new inode, > max");
+        return -1;
     }
 
-
-    if (inode->i_blocks < (FEXT2_N_BLOCKS-1)) 
+    uint32_t cur = 0;
+    for (; cur < FEXT2_N_BLOCKS-1; ++cur) 
     {
-        inode->i_block[inode->i_blocks] = block_no;
+        if (!inode->i_block[cur])
+        {
+            inode->i_block[cur] = block_no;
+            return cur;
+        }
     }
-    else if (inode->i_blocks == (FEXT2_N_BLOCKS-1))  // 这种情况下应该申请一个数据块存储数据
+    if (cur == FEXT2_N_BLOCKS-1) 
     {
-        uint32_t group_number = (ino-1)/fext2_sb.s_inodes_per_group;
-        uint32_t blockno_in = get_unused_block(group_number);
-        if (!blockno_in)
-            return FALSE;
-        block_bitmap_set(blockno_in, 1);
-        inode->i_block[FEXT2_N_BLOCKS-1] = blockno_in;
-        uint32_t new_block[BLOCK_SIZE/sizeof(uint32_t)]={0};
-        new_block[0] = block_no;
-        write_data_blcok(new_block,blockno_in); // 同步数据到磁盘中
+        
+        if (!inode->i_block[FEXT2_N_BLOCKS-1])
+        {
+            uint32_t group_number = (ino-1)/fext2_sb.s_inodes_per_group;
+            uint32_t blockno_in = get_unused_block(group_number);
+            if (!blockno_in)
+                return -1;
+            block_bitmap_set(blockno_in, 1);
+            inode->i_block[FEXT2_N_BLOCKS-1] = blockno_in;
+            uint32_t new_block[BLOCK_SIZE/sizeof(uint32_t)]={0};
+            new_block[0] = block_no;
+            write_data_blcok(new_block,blockno_in); // 同步数据到磁盘中
+            return FEXT2_N_BLOCKS-1;
+        }
+        else
+        {
+            uint32_t block_buffer[BLOCK_SIZE/sizeof(uint32_t)]={0};
+            read_data_block(block_buffer, inode->i_block[FEXT2_N_BLOCKS-1]);
+            uint32_t remain_num = (inode->i_blocks - FEXT2_N_BLOCKS+1);
+            uint32_t i = 0; 
+            for (; i < remain_num; ++i)
+            {
+                if (!block_buffer[i])
+                {
+                    block_buffer[i] = block_no;
+                    write_data_blcok(block_buffer,inode->i_block[FEXT2_N_BLOCKS-1]); 
+                    return (FEXT2_N_BLOCKS-1)+i;
+                }
+            }
+            if (i == remain_num) 
+            {
+                block_buffer[remain_num] = block_no;
+                write_data_blcok(block_buffer,inode->i_block[FEXT2_N_BLOCKS-1]); 
+                return (FEXT2_N_BLOCKS-1)+remain_num;
+            }
+        }
     }
-    else // 大于就先读取一个块
-    {
-        uint32_t block_buffer[BLOCK_SIZE/sizeof(uint32_t)]={0};
-        read_data_block(block_buffer, inode->i_block[FEXT2_N_BLOCKS-1]);
-        block_buffer[inode->i_blocks-FEXT2_N_BLOCKS+1] = block_no;
-        write_data_blcok(block_buffer,inode->i_block[FEXT2_N_BLOCKS-1]); // 同步数据到磁盘中
-    } 
-    return TRUE;
+    return -1;
 }
 
 Bool write_inode_data_block(void * block,uint32_t data_block_index, const  struct fext2_inode * inode)
 {
-    if (data_block_index >= inode->i_blocks) 
-        return FALSE;
 
     if (data_block_index < FEXT2_N_BLOCKS-1) 
     {
@@ -219,8 +242,41 @@ Bool write_inode_data_block(void * block,uint32_t data_block_index, const  struc
 
         uint32_t tmp_block[BLOCK_SIZE/sizeof(uint32_t)];
         uint32_t offset = data_block_index - FEXT2_N_BLOCKS + 1;
+        if (offset >= (BLOCK_SIZE/sizeof(uint32_t)))
+        {
+            DBG_PRINT("This offset more than limit");
+            return FALSE;
+        }
         read_data_block(tmp_block, inode->i_block[FEXT2_N_BLOCKS-1]);
         write_data_blcok(block,tmp_block[offset]);
+    }
+    return TRUE;
+}
+/**
+ * @brief 
+ * 依据某data_block_index释放该块的内容
+ * @param data_block_index 
+ * @param inode 
+ * @return Bool 
+ */
+Bool free_inode_data_block(uint32_t data_block_index,struct fext2_inode * inode)
+{
+
+    if (data_block_index < FEXT2_N_BLOCKS-1) 
+    {
+        block_bitmap_set(inode->i_block[data_block_index], 0);
+        inode->i_block[data_block_index] = 0;
+    }
+    else 
+    {
+
+        uint32_t tmp_block[BLOCK_SIZE/sizeof(uint32_t)];
+        uint32_t offset = data_block_index - FEXT2_N_BLOCKS + 1;
+        read_data_block(tmp_block, inode->i_block[FEXT2_N_BLOCKS-1]);
+        // 获取
+        block_bitmap_set(tmp_block[offset], 0);
+        tmp_block[offset] = 0;
+        write_data_blcok(tmp_block,inode->i_block[FEXT2_N_BLOCKS-1]); // 更新块数据
     }
     return TRUE;
 }

@@ -11,7 +11,8 @@ static struct fuse_operations fext2_oper = {
     .getattr = fext2_getattr,
     .opendir = fext2_opendir,
     .readdir = fext2_readdir,
-    .mkdir   = fext2_mkdir
+    .mkdir   = fext2_mkdir,
+    .rmdir   = fext2_rmdir
     
 };
 
@@ -37,7 +38,6 @@ int main(int argc,char * argv[])
             DBG_PRINT("can't open the %s!",argv[i+1]);
             return -1;  
         }
-            
         else
         {
             for (; i < argc-2; ++i) {

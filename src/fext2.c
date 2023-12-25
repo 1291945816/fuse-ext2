@@ -120,7 +120,6 @@ int fext2_getattr(const char * path, struct stat * stabuf)
         child_path[len-1] = '\0'; // 加结尾符
         uint32_t ino=lookup_inode_by_name(root_inode,child_path);
         if (ino == 0) {
-            DBG_PRINT("ERROR");
             free(root_inode);
             return -ENOENT;
         }
@@ -227,7 +226,7 @@ int fext2_readdir(const char * path, void * buff,
     uint8_t block[BLOCK_SIZE]={0};
     uint32_t curr_blk = 0;
     uint32_t curr_size = 0;
-    uint32_t blk_size = 0;
+    uint32_t blk_offset = 0;
 
 
 
@@ -241,42 +240,70 @@ int fext2_readdir(const char * path, void * buff,
     filler(buff,"..",NULL,0); // 上一层目录
 
 
-    read_inode_data_block(block,curr_blk++,dir_inode);
+
+    while (dir_inode->i_size > 0 && (read_inode_data_block(block,curr_blk++,dir_inode))==FALSE){
+        memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE);
+    };
+
     struct fext2_dir_entry * entry= (struct fext2_dir_entry *)block;
+    blk_offset  += entry->rec_len;
+    curr_size += sizeof(*entry);
 
-    while (curr_size < dir_inode->i_size)
+    while (curr_size <= dir_inode->i_size)
     {
-        DBG_PRINT("curr_size %d  dir_inode->i_size %d",curr_size,dir_inode->i_size);
 
-        if ((BLOCK_SIZE - blk_size) < sizeof(struct fext2_dir_entry)) 
-        {
-            DBG_PRINT("%d",curr_blk);
-            memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE); 
-            read_inode_data_block(block,curr_blk++,dir_inode);
-            entry= (struct fext2_dir_entry *)block;
-            blk_size = 0;
-        }
-        if (entry->ino == 0)  // 读取到了空数据
-            break;
-
-        DBG_PRINT("%d", entry->ino);
-
-
-    
         char name[FEXT2_MAX_NAME_LEN+1]={0};
         memcpy(name, entry->file_name, entry->name_len);
         name[entry->name_len] = '\0';
-
-        curr_size += entry->rec_len;
-        blk_size  += entry->rec_len;
-        
-
         filler(buff,name,NULL,0); // 填充数据
 
-        DBG_PRINT("reading: %s,total %d Byte", name,entry->rec_len);
-
-        entry = (struct fext2_dir_entry *)((void *)entry + entry->rec_len); // 移到下一项
+        DBG_PRINT("reading: %s,total %lu Byte", name,sizeof(*entry));
+        DBG_PRINT("current_ino: %d", entry->ino);
+        DBG_PRINT("curr_size %d  dir_inode->i_size %d",curr_size,dir_inode->i_size);
         
+        if ((BLOCK_SIZE - blk_offset) < sizeof(struct fext2_dir_entry))
+        {
+            DBG_PRINT("cur_blk: %d",curr_blk);
+            memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE);
+            while (curr_size < dir_inode->i_size && (read_inode_data_block(block,curr_blk++,dir_inode))==FALSE)
+            {
+                memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE);
+            }
+            entry= (struct fext2_dir_entry *)block;
+            blk_offset = entry->rec_len;
+            curr_size += sizeof(*entry);
+        }
+        else
+        {
+            entry = (struct fext2_dir_entry *)((void *)entry + entry->rec_len); // 到下一项
+
+            if (entry->ino == 0) 
+            {
+                 DBG_PRINT("current_ino: 0");
+                // ******针对反复利用的页进行的处理******************
+                 if (curr_size <= dir_inode->i_size)
+                 {
+                    DBG_PRINT("cur_blk: %d",curr_blk);
+                    memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE);
+                    while (curr_size < dir_inode->i_size && (read_inode_data_block(block,curr_blk++,dir_inode))==FALSE)
+                    {
+                        memset(block, 0, sizeof(uint8_t)*BLOCK_SIZE);
+                    }
+                    entry= (struct fext2_dir_entry *)block;
+                    blk_offset = entry->rec_len;
+                    curr_size += sizeof(*entry);
+                 }else
+                {
+                    break;
+                }
+  
+            }else 
+            {
+                blk_offset  += entry->rec_len;
+                curr_size += sizeof(*entry);          
+            }
+
+        }        
     }
     free(dir_inode);
 
@@ -325,7 +352,7 @@ int fext2_mkdir(const char * path, mode_t mode)
         parent_dir = read_inode(parent_ino);
     }
     
-    // 这里有个技巧 尽量和父目录在同一个块组里面
+    //尽量和父目录在同一个块组里面
     group_number = GET_GROUP_N(parent_ino);
 
     while ((ino=get_unused_inode(group_number)) == 0)
@@ -384,6 +411,7 @@ int fext2_mkdir(const char * path, mode_t mode)
         inode_bitmap_set(ino, 0);
         block_bitmap_set(blk_ino, 0);
         DBG_PRINT("have not add entry for dir");
+        free(parent_dir);
         return -EPERM;
     }
         
@@ -393,4 +421,59 @@ int fext2_mkdir(const char * path, mode_t mode)
     free(parent_dir);
 
     return 0;
+}
+
+/**
+ * @brief 
+ * 删除一个目录
+ * @return int 
+ */
+int fext2_rmdir(const char * path)
+{
+    DBG_PRINT("path: %s",path);
+
+    uint32_t parent_ino=0;
+    struct fext2_inode * parent_dir= NULL;
+    const uint32_t len=strlen(path);
+    char dir_name[FEXT2_MAX_NAME_LEN]={0};
+
+    char * parent_path = (char*)malloc(sizeof(char)* len+1); 
+    memset(parent_path, '\0', len+1);
+
+
+
+
+    // 解析路径
+    parse_cur_dir(path, parent_path, dir_name);
+    
+    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
+    if (!strlen(parent_path) && strlen(dir_name)) 
+    {
+        DBG_PRINT("parent dir: %s \t current dir:%s", "/", dir_name); 
+        parent_ino = INODE_ROOT_INO;   
+        parent_dir = root_dir;
+    }
+    else
+    {
+        free(root_dir);
+        DBG_PRINT("parent dir: %s \t current dir: %s", parent_path, dir_name);
+        parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
+        if (!parent_ino)
+            return -ENOENT;
+        parent_dir = read_inode(parent_ino);
+    }
+
+    // 移除dir_name
+    Bool ret = remove_entry(parent_dir,dir_name);
+
+    if (ret==FALSE) {
+        DBG_PRINT("Sorry,have not remove %s",dir_name);
+        return -1;
+    }
+    // 更新目录节点信息
+    DBG_PRINT("update inode");
+    write_inode(parent_dir, parent_ino); 
+    update_group_desc();
+    return 0;
+
 }

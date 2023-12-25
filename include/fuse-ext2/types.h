@@ -78,7 +78,7 @@ struct fext2_group_desc
 
 
 #define FEXT2_N_BLOCKS     8               // 数据块数目 包含7个直接索引+1个间接索引
-#define FEXT2_MAX_BLOCKS   262
+#define FEXT2_MAX_BLOCKS   263
 
 
 
@@ -118,7 +118,7 @@ struct fext2_dir_entry
     uint8_t  file_type;                    // 文件类型 1. 常规文件  2. 目录文件
     char     file_name[FEXT2_MAX_NAME_LEN];// 可以使用可变长度的数组（暂时不用,现在是固定大小的）
 
-};
+}__attribute__ ((packed));
 
 
 #endif
