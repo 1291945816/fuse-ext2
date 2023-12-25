@@ -35,11 +35,12 @@ int main(int argc,char * argv[])
         
         if (!device_open(argv[i+1]))
         {
+
             DBG_PRINT("can't open the %s!",argv[i+1]);
             return -1;  
         }
         else
-        {
+        {            
             for (; i < argc-2; ++i) {
                 argv[i] = argv[i+2]; // xx xxx xxx 
             }

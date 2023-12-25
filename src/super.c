@@ -10,7 +10,7 @@
 
 // static 函数会隐藏具体的内容
 struct fext2_super_block fext2_sb; 
-struct fext2_group_desc *fext2_groups_table;    // ！文件系统退出时要记得移除内存
+struct fext2_group_desc * fext2_groups_table;    // ！文件系统退出时要记得移除内存
 
 
 int read_superblock()
@@ -59,8 +59,7 @@ int read_superblock()
         write_data_blcok(buffer, root_inode.i_block[0]);
 
         write_inode(&root_inode, 2); // 向磁盘写入inode信息 
-        // 释放
-        free(fext2_groups_table); // 后续再根据情况申请 也可以不释放
+
            
     }
     
