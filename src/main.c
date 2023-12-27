@@ -12,7 +12,8 @@ static struct fuse_operations fext2_oper = {
     .opendir = fext2_opendir,
     .readdir = fext2_readdir,
     .mkdir   = fext2_mkdir,
-    .rmdir   = fext2_rmdir
+    .rmdir   = fext2_rmdir,
+    .open    = fext2_open
     
 };
 

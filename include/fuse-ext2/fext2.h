@@ -109,6 +109,7 @@ int    fext2_opendir(const char *, struct fuse_file_info *);
 int    fext2_readdir(const char *, void *, fuse_fill_dir_t, off_t,struct fuse_file_info *);
 int    fext2_mkdir(const char *, mode_t);
 int    fext2_rmdir(const char *);
+int    fext2_open(const char *, struct fuse_file_info *);
 /**
  * @brief 
  * 返回实际的块数目

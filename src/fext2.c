@@ -4,7 +4,12 @@
 #include "utils.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
+#include <cstdint>
 #include <stdlib.h>
+#include <string.h>
+
 
 
 
@@ -147,9 +152,6 @@ int fext2_getattr(const char * path, struct stat * stabuf)
     return 0;
 }
 
-
-
-
 /**
  * @brief 打开目录，并传递打开的信息
  * 
@@ -159,7 +161,7 @@ int fext2_getattr(const char * path, struct stat * stabuf)
  */
 int fext2_opendir(const char * path, struct fuse_file_info * file_info)
 {
-    DBG_PRINT("open path: %s",path);
+    DBG_PRINT("opendir path: %s",path);
 
     uint32_t len = strlen(path);
 
@@ -204,7 +206,6 @@ int fext2_opendir(const char * path, struct fuse_file_info * file_info)
     }else
     {
         DBG_PRINT("No this Directory!");
-        printf("No this Directory!");
         free(ret);
         free(root_inode);
         return -ENOTDIR;
@@ -494,3 +495,54 @@ int fext2_rmdir(const char * path)
     return 0;
 
 }
+
+/**
+ * @brief 
+ * 打开一个文件,获取其文件信息
+ * @param path 文件路径
+ * @param file_info 文件信息 
+ * @return int 
+ */
+
+int fext2_open(const char * path, struct fuse_file_info * file_info)
+{
+    DBG_PRINT("open %s", path);
+
+    uint32_t len = strlen(path);
+    // len为1时 / 或者 xx都不行
+    if ((len == 1) || (len != 1 &&  path[0]!= '/') )
+        return -EPERM; // 无权限
+    else
+    {
+        char * path_copy = (char *) malloc(sizeof(char) * len);
+        memset(path_copy, 0, len);
+        strncpy(path_copy, path+1, len-1); // 移除掉/ 总长为len 实际移动len-1个
+        struct fext2_inode * root = read_inode(INODE_ROOT_INO);
+        uint32_t ino = lookup_inode_by_name(root, path_copy);
+        free(path_copy);
+        free(root);
+        struct fext2_inode * ret = read_inode(ino);
+        // 没找到这个文件
+        if (ret == NULL)
+        {
+            DBG_PRINT("");
+            return -ENOENT;
+        
+        }
+        // 是否为文件
+        if (IS_REG(ret->i_mode))
+        {
+            file_info->fh = ino;
+            free(ret);
+            return 0;
+        }
+        else
+        {
+            DBG_PRINT("Is not a file");
+            free(ret);
+            return -EPERM;
+        }
+    }
+}
+
+

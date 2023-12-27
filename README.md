@@ -41,3 +41,8 @@ mkdir test
 # 如果想在挂载后能够被其他用户所访问，可以通过增加 allow_user ,同时需要配置 /etc/fuse.conf 里面的内容 （去掉user_allow_other的注释）
 ./fuse-ext2  -o allow_other test --mount_image fext2 
 ```
+
+**查看帮助信息**
+```shell
+./fuse-ext2 -h
+```

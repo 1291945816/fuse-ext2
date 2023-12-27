@@ -108,6 +108,11 @@ Bool read_inode_data_block(void * block,uint32_t data_block_index, const struct 
 struct fext2_inode *  read_inode(uint32_t ino)
 {
 
+    if (ino == 0) 
+    {
+        DBG_PRINT("ino: 0");
+        return NULL;
+    }
 
     // 
     uint32_t group_number = (ino-1)/ fext2_sb.s_inodes_per_group;
