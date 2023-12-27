@@ -19,4 +19,4 @@
 Bool read_data_block(void * block,uint32_t block_number);
 Bool write_data_blcok(void * block,uint32_t block_number);
 int find_char(const char * src,char c);
-int parse_cur_dir(const char * path,char * parent_dir,char * cur_dir);
+int parse_cur_dir(const char * ,char *,char *);

@@ -4,11 +4,7 @@
 #include "utils.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
-#include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
-#include <cstdint>
-#include <stdlib.h>
-#include <string.h>
+
 
 
 
@@ -346,9 +342,10 @@ int fext2_mkdir(const char * path, mode_t mode)
     }
     else
     {
-        free(root_dir);
+        
         DBG_PRINT("parent dir is %s \t current dir is %s", parent_path, dir_name);
         parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
+        free(root_dir);
         if (!parent_ino)
         {
             free(parent_path);
@@ -543,6 +540,136 @@ int fext2_open(const char * path, struct fuse_file_info * file_info)
             return -EPERM;
         }
     }
+}
+
+
+/**
+ * @brief 
+ * 创建并打开一个文件，如果文件不存在，则首先创建它 然后打开它
+ * @return int 
+ */
+int fext2_create(const char * path, mode_t mode, struct fuse_file_info * file_info)
+{
+    DBG_PRINT("create: %s", path);
+
+    // 处理一些其他情况
+    int len = strlen(path);
+
+    char * parent_path = (char *)malloc(sizeof(char)*len);
+    char file_name[FEXT2_MAX_NAME_LEN]={0};
+    memset(parent_path, 0, len);
+    
+    // 解析路径
+    parse_cur_dir(path, parent_path, file_name);
+
+    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
+
+    uint32_t parent_ino = 0;
+    struct fext2_inode * parent_dir = NULL;
+    // 处于根路径下
+    if (!strlen(parent_path) && strlen(file_name))
+    {
+        DBG_PRINT("parent dir: %s, new file name: %s","/",file_name);
+        parent_ino = INODE_ROOT_INO;
+        parent_dir = root_dir;
+    }
+    else
+    {
+        
+        DBG_PRINT("parent dir: %s, new file name: %s",parent_path,file_name);
+        parent_ino = lookup_inode_by_name(root_dir,parent_path+1);
+        free(parent_path);
+        free(root_dir);
+        if (!parent_ino)
+        {
+            return -ENOENT;
+        }
+        parent_dir = read_inode(parent_ino);
+    }
+
+    // 从父目录的组号开始计算
+    uint32_t group_numbe = GET_GROUP_N(parent_ino);
+    uint32_t new_ino = 0;
+    // 重复申请
+    while ((new_ino = get_unused_inode(group_numbe)) == 0)
+    {
+        if (group_numbe >= NUM_GROUP)
+            break;
+        ++group_numbe;
+    }
+    if (!new_ino)
+    {
+        DBG_PRINT("[inode] DISK have not free inode!");
+        return -ENOSPC;
+    }
+    DBG_PRINT("new ino: %u",new_ino);
+
+    // 申请一个数据块
+    group_numbe = 0;
+    uint32_t new_blk_ino = 0;
+    while ((new_blk_ino = get_unused_block(group_numbe)) == 0)
+    {
+        if (group_numbe >= NUM_GROUP)
+            break;
+        ++group_numbe;
+    }
+    if (!new_blk_ino)
+    {
+        DBG_PRINT("[data] DISK have not free data block!");
+       
+        return -ENOSPC;
+    }
+    DBG_PRINT("new blk_no: %u",new_blk_ino);
+
+    struct fuse_context *fcxt=fuse_get_context(); 
+
+    struct fext2_inode new_inode;
+    new_inode.i_uid = fcxt->uid;
+    new_inode.i_gid = fcxt->gid;
+    new_inode.i_atime = new_inode.i_ctime = new_inode.i_mtime = time(NULL);
+    new_inode.i_dtime = 0;
+    new_inode.i_block[0] = new_blk_ino;
+    new_inode.i_blocks=1;
+    new_inode.i_mode = mode|__S_IFREG; // 模式
+    new_inode.i_link_count = 1;
+    new_inode.i_size = 0;
+    
+    struct fext2_dir_entry new_entry;
+    strncpy(new_entry.file_name, file_name, strlen(file_name));
+    new_entry.file_name[strlen(file_name)] = 0; // file的长度为 255
+    new_entry.file_type = REG;
+    new_entry.name_len = strlen(file_name);
+    new_entry.ino = new_ino;
+    new_entry.rec_len = sizeof(new_entry);
+
+    // 此处顺序不可以置换add_entry后面（add_entry会申请新块）
+    inode_bitmap_set(new_ino, 1);
+    block_bitmap_set(new_blk_ino, 1);
+
+    Bool ret = add_entry(parent_ino, parent_dir, &new_entry);
+    if (ret == FALSE)
+    {
+        inode_bitmap_set(new_ino, 0);
+        block_bitmap_set(new_blk_ino, 0);
+        DBG_PRINT("have not add new entry for file");
+        free(parent_dir);
+        return -EPERM;
+    }
+
+    write_inode(&new_inode, new_ino);
+    write_inode(parent_dir, parent_ino);
+    update_group_desc();
+    free(parent_dir);
+    return 0;
+}
+
+
+int fext2_utimens(const char * path, const struct timespec tv[2])
+{
+    
+    DBG_PRINT("update access/mod time,but nothing to do");
+    return 0;
+
 }
 
 

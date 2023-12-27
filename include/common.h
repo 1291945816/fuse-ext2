@@ -19,4 +19,6 @@
 #include <asm-generic/errno.h>
 #include<time.h>
 #include <fuse.h>
+#include <fcntl.h>
+
 #endif

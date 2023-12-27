@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include"types.h"
-#include <stdint.h>
 
 
 #define  FILESYSTEM_MAGIC     1509          // 文件系统幻数
@@ -93,8 +92,6 @@ uint32_t lookup_inode_by_name(struct fext2_inode * dir, const char * child);
 
 Bool add_entry(uint32_t dir_ino, struct fext2_inode * dir,struct fext2_dir_entry * child_entry);
 void update_entry(struct fext2_inode * dir,const fext2_entry_helper * cur_entry_data,struct fext2_dir_entry * entry);
-
-
 Bool remove_entry(struct fext2_inode * dir,const char * entry_name);
 
 
@@ -110,6 +107,8 @@ int    fext2_readdir(const char *, void *, fuse_fill_dir_t, off_t,struct fuse_fi
 int    fext2_mkdir(const char *, mode_t);
 int    fext2_rmdir(const char *);
 int    fext2_open(const char *, struct fuse_file_info *);
+int    fext2_create(const char *, mode_t, struct fuse_file_info *);
+int    fext2_utimens(const char *, const struct timespec tv[2]);
 /**
  * @brief 
  * 返回实际的块数目
