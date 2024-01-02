@@ -4,6 +4,10 @@
 #include "utils.h"
 #include "fuse-ext2/fext2.h"
 #include "fuse-ext2/types.h"
+#include <asm-generic/errno-base.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 
@@ -230,6 +234,7 @@ int fext2_readdir(const char * path, void * buff,
 
     // 获取打开的目录的信息
     uint32_t ino = (uint32_t)file_info->fh;
+    DBG_PRINT("test: %d", ino);
     struct fext2_inode *dir_inode= read_inode(ino);
     DBG_PRINT("current_path is %s", path);
     DBG_PRINT("dir size is %.2lf", (dir_inode->i_size/(1024*1.0)));
@@ -440,56 +445,57 @@ int fext2_rmdir(const char * path)
 {
     DBG_PRINT("path: %s",path);
 
-    uint32_t parent_ino=0;
-    struct fext2_inode * parent_dir= NULL;
-    const uint32_t len=strlen(path);
-    char dir_name[FEXT2_MAX_NAME_LEN]={0};
+    // uint32_t parent_ino=0;
+    // struct fext2_inode * parent_dir= NULL;
+    // const uint32_t len=strlen(path);
+    // char dir_name[FEXT2_MAX_NAME_LEN]={0};
 
-    char * parent_path = (char*)malloc(sizeof(char)* len+1); 
-    memset(parent_path, '\0', len+1);
-
-
+    // char * parent_path = (char*)malloc(sizeof(char)* (len+1)); 
+    // memset(parent_path, '\0', len+1);
 
 
-    // 解析路径
-    parse_cur_dir(path, parent_path, dir_name);
+
+
+    // // 解析路径
+    // parse_cur_dir(path, parent_path, dir_name);
     
-    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
-    if (!strlen(parent_path) && strlen(dir_name)) 
-    {
-        DBG_PRINT("parent dir: %s \t current dir:%s", "/", dir_name); 
-        parent_ino = INODE_ROOT_INO;   
-        parent_dir = root_dir;
-    }
-    else
-    {
-        free(root_dir);
-        DBG_PRINT("parent dir: %s \t current dir: %s", parent_path, dir_name);
-        parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
-        if (!parent_ino)
-        {
-            free(parent_path);
-            return -ENOENT;
-        }
+    // struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
+    // if (!strlen(parent_path) && strlen(dir_name)) 
+    // {
+    //     DBG_PRINT("parent dir: %s \t current dir:%s", "/", dir_name); 
+    //     parent_ino = INODE_ROOT_INO;   
+    //     parent_dir = root_dir;
+    // }
+    // else
+    // {
+        
+    //     DBG_PRINT("parent dir: %s \t current dir: %s", parent_path, dir_name);
+    //     parent_ino = lookup_inode_by_name(root_dir, parent_path+1); // 不准以/ 开头 故parent+1 跳过/
+    //     if (!parent_ino)
+    //     {
+    //         free(root_dir);
+    //         free(parent_path);
+    //         return -ENOENT;
+    //     }
             
-        parent_dir = read_inode(parent_ino);
-    }
+    //     parent_dir = read_inode(parent_ino);
+    // }
 
-    // 移除dir_name
-    Bool ret = remove_entry(parent_dir,dir_name);
+    // // 移除dir_name
+    // Bool ret = remove_entry(parent_dir,dir_name);
 
-    if (ret==FALSE) {
-        DBG_PRINT("Sorry,have not remove %s",dir_name);
-        free(parent_path);
-        return -1;
-    }
-    // 更新目录节点信息
-    DBG_PRINT("update inode");
-    write_inode(parent_dir, parent_ino); 
-    update_group_desc();
-    free(parent_path);
-    free(root_dir);
-    return 0;
+    // if (ret==FALSE) {
+    //     DBG_PRINT("Sorry,have not remove %s",dir_name);
+    //     free(parent_path);
+    //     return -1;
+    // }
+    // // 更新目录节点信息
+    // DBG_PRINT("update inode");
+    // write_inode(parent_dir, parent_ino); 
+    // update_group_desc();
+    // free(parent_path);
+    // free(root_dir);
+    return fext2_unlink(path);
 
 }
 
@@ -663,7 +669,13 @@ int fext2_create(const char * path, mode_t mode, struct fuse_file_info * file_in
     return 0;
 }
 
-
+/**
+ * @brief 
+ * 更新文件的时间，在文件被创建时被调用
+ * @param path 
+ * @param tv 
+ * @return int 
+ */
 int fext2_utimens(const char * path, const struct timespec tv[2])
 {
     
@@ -672,4 +684,87 @@ int fext2_utimens(const char * path, const struct timespec tv[2])
 
 }
 
+/**
+ * @brief 
+ * 在没有文件向open发起调用时则会进行引用
+ * @param path 
+ * @param file_info 
+ * @return int 
+ */
+int fext2_release(const char * path, struct fuse_file_info * file_info)
+{
+
+    DBG_PRINT("release have exec...");
+
+    // TODO:可以在最后一次打开文件关闭时彻底清楚文件的信息
+    file_info->fh = 0; // 更新描述符信息
+    return 0;
+}
+
+
+int fext2_releasedir(const char * path, struct fuse_file_info * file_info)
+{
+    DBG_PRINT("release dir have exec...");
+    file_info->fh = 0; // 更新描述符信息
+    return 0;
+}
+
+
+/**
+ * @brief 
+ * 移除一个文件 本质上是移除一个目录项
+ * @return int 
+ */
+int fext2_unlink(const char * path)
+{
+
+    // 移除对应的目录项 以及 数据块
+    // remove_entry(struct fext2_inode *dir, const char *entry_name)
+
+    DBG_PRINT("unlink path: %s",path);
+    const uint32_t len = strlen(path);
+    char * parent_path = (char *)malloc(sizeof(char)* len);
+    memset(parent_path, '\0', len);
+    char file_name[FEXT2_MAX_NAME_LEN]={0};
+
+    parse_cur_dir(path,parent_path, file_name);
+
+    struct fext2_inode * root_dir = read_inode(INODE_ROOT_INO);
+    uint32_t parent_ino = 0;
+    struct fext2_inode * parent_inode = NULL;
+    if(!strlen(parent_path) && strlen(file_name))
+    {
+        DBG_PRINT("parent dir: %s\t current dir: %s","/",file_name);
+        parent_inode = root_dir;
+        parent_ino = INODE_ROOT_INO;
+    }
+    else // 相信当前解析的结果是一定有父目录的
+    {
+        DBG_PRINT("parent dir: %s\t current dir: %s",parent_path,file_name);
+        parent_ino = lookup_inode_by_name(root_dir, parent_path+1);
+        free(root_dir);
+        free(parent_path);
+        if (!parent_ino) 
+        {
+            return -ENOENT;
+        }
+        parent_inode = read_inode(parent_ino);
+    }
+
+
+    // 移除对应的目录项
+    remove_entry(parent_inode, file_name);
+    // 无法挽回就不做处理
+    // if (ret == FALSE)
+    // {
+    //     // 这里可能会导致做了一些操作无法回退
+    //     DBG_PRINT("Sorry,have not remove %s", file_name);
+    //     free(parent_inode);
+    //     return -EPERM;
+    // }
+    write_inode(parent_inode, parent_ino);
+    update_group_desc();
+    free(parent_inode);
+    return 0;
+}
 

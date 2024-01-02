@@ -5,17 +5,20 @@
 
 /*注册函数*/
 static struct fuse_operations fext2_oper = {
-    .init    = fext2_init, // 初始化
-    .destroy = fext2_destory,
-    .statfs  = fext2_statfs,
-    .getattr = fext2_getattr,
-    .opendir = fext2_opendir,
-    .readdir = fext2_readdir,
-    .mkdir   = fext2_mkdir,
-    .rmdir   = fext2_rmdir,
-    .open    = fext2_open,
-    .create  = fext2_create,
-    .utimens = fext2_utimens,
+    .init       = fext2_init, // 初始化
+    .destroy    = fext2_destory,
+    .statfs     = fext2_statfs,
+    .getattr    = fext2_getattr,
+    .opendir    = fext2_opendir,
+    .readdir    = fext2_readdir,
+    .mkdir      = fext2_mkdir,
+    .rmdir      = fext2_rmdir,
+    .open       = fext2_open,
+    .create     = fext2_create,
+    .utimens    = fext2_utimens,
+    .release    = fext2_release,
+    .releasedir = fext2_releasedir,
+    .unlink     = fext2_unlink
     
 };
 

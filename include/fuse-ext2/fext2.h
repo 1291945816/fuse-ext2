@@ -109,6 +109,9 @@ int    fext2_rmdir(const char *);
 int    fext2_open(const char *, struct fuse_file_info *);
 int    fext2_create(const char *, mode_t, struct fuse_file_info *);
 int    fext2_utimens(const char *, const struct timespec tv[2]);
+int    fext2_release(const char *, struct fuse_file_info *);
+int    fext2_releasedir(const char *, struct fuse_file_info *);
+int    fext2_unlink(const char *);
 /**
  * @brief 
  * 返回实际的块数目
